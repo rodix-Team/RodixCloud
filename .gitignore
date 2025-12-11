@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Data files
+*.json
+!package.json
+!tsconfig.json
+real_demo_data.json
+recommender_data.json
+*_data.json
+*_demo_data.json
+
+# Logs
+*.log
+logs/
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+.next/
+out/
+
+# Images (demos only)
+*.png
+*.jpg
+*.jpeg
+*.gif
+!logo.png
+!screenshot.png
+
+# Temporary
+tmp/
+temp/
+.cache/
+
+# Secrets
+.env
+.env.local
+.env.production
+!.env.production.example
+*.key
+*.pem
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Other
+.directory
+│── content_recommender.py/
+│── items.csv/

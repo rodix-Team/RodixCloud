@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Advanced AI Recommendation System - تجربة متقدمة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3em;
+            margin-bottom: 15px;
+            font-weight: 900;
+        }
+
+        .features-list {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .feature-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr 2fr;
+            }
+
+            .stats-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panels */
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .panel-header h2 {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        /* Users Panel */
+        .user-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-card:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .user-card.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .user-interests {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
+        /* Recommendations */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 6px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .category-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .score-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .product-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin: 12px 0;
+        }
+
+        .product-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            color: #495057;
+        }
+
+        .reason-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .reason-trending {
+            background: #ffd700;
+            color: #856404;
+        }
+
+        .reason-quality {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .reason-similar {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Stats Panel */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* AI Learning Indicator */
+        .learning-indicator {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .learning-icon {
+            font-size: 2em;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Context Info */
+        .context-info {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .context-info strong {
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧠 Advanced AI Recommendation System</h1>
+            <p style="font-size: 1.2em; color: #666; margin-bottom: 20px;">
+                نظام توصيات متقدم - يتعلم من سلوك الزبائن تلقائياً
+            </p>
+
+            <div class="features-list">
+                <span class="feature-badge">🎯 Collaborative Filtering</span>
+                <span class="feature-badge">📊 Content-Based</span>
+                <span class="feature-badge">⏰ Time Decay</span>
+                <span class="feature-badge">🔥 Trending</span>
+                <span class="feature-badge">🎨 Diversity</span>
+                <span class="feature-badge">🎲 Serendipity</span>
+                <span class="feature-badge">🌍 Context-Aware</span>
+            </div>
+        </div>
+
+        <!-- AI Learning Indicator -->
+        <div class="learning-indicator" id="learningIndicator" style="display: none;">
+            <div class="learning-icon">🧠</div>
+            <div>
+                <strong>AI يتعلم الآن...</strong><br>
+                <span id="learningText">معالجة البيانات و تحديث النماذج</span>
+            </div>
+        </div>
+
+        <!-- Context Info -->
+        <div class="context-info" id="contextInfo">
+            <strong>📍 السياق الحالي:</strong>
+            <span id="contextText">جاري التحميل...</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📊 إحصائيات النظام</h2>
+                <button class="btn btn-secondary" onclick="loadStats()">🔄 تحديث</button>
+            </div>
+            <div class="stats-grid" id="statsGrid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Users Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>👥 الزبائن</h2>
+                </div>
+                <div id="usersList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 id="recommendationsTitle">✨ التوصيات</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="simulateInteraction()" id="interactBtn"
+                            style="display: none;">
+                            🛒 محاكاة شراء
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadRecommendations()">
+                            🔄 تحديث
+                        </button>
+                    </div>
+                </div>
+                <div id="recommendationsArea">
+                    <div class="empty-state">
+                        <div class="empty-icon">🎯</div>
+                        <p>اختر زبوناً لعرض التوصيات</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📝 سجل النشاط</h2>
+                </div>
+                <div id="activityLog" style="max-height: 600px; overflow-y: auto;">
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <p>لا توجد أنشطة بعد</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let activityLog = [];
+
+        // Initialize
+        async function init() {
+            updateContext();
+            await loadDemo();
+            await loadStats();
+
+            // Update context every minute
+            setInterval(updateContext, 60000);
+        }
+
+        // Update context info
+        function updateContext() {
+            const now = new Date();
+            const hour = now.getHours();
+            const day = now.getDay();
+            const isWeekend = day === 0 || day === 6;
+
+            let timeOfDay = '';
+            if (hour >= 6 && hour < 12) timeOfDay = '🌅 صباح';
+            else if (hour >= 12 && hour < 17) timeOfDay = '☀️ ظهيرة';
+            else if (hour >= 17 && hour < 21) timeOfDay = '🌆 مساء';
+            else timeOfDay = '🌙 ليل';
+
+            const weekend = isWeekend ? '📅 عطلة' : '📅 يوم عمل';
+
+            document.getElementById('contextText').innerHTML =
+                `${timeOfDay} | ${weekend} | الساعة ${hour}:00 (AI يستخدم هذا في التوصيات)`;
+        }
+
+        // Load demo data
+        async function loadDemo() {
+            showLearning('تحميل البيانات التجريبية...');
+
+            // Simulate loading
+            await sleep(1000);
+
+            const users = [
+                {
+                    id: 'ahmed',
+                    name: 'أحمد',
+                    interests: ['إلكترونيات', 'كمبيوتر', 'تقنية'],
+                    viewed: 5,
+                    purchased: 2
+                },
+                {
+                    id: 'sara',
+                    name: 'سارة',
+                    interests: ['ملابس', 'موضة', 'إكسسوارات'],
+                    viewed: 8,
+                    purchased: 3
+                },
+                {
+                    id: 'omar',
+                    name: 'عمر',
+                    interests: ['كتب', 'برمجة', 'تعليم'],
+                    viewed: 12,
+                    purchased: 5
+                },
+                {
+                    id: 'fatima',
+                    name: 'فاطمة',
+                    interests: ['رياضة', 'صحة', 'لياقة'],
+                    viewed: 6,
+                    purchased: 1
+                }
+            ];
+
+            displayUsers(users);
+            hideLearning();
+
+            addLog('✅ تم تحميل 4 زبائن');
+        }
+
+        // Display users
+        function displayUsers(users) {
+            const html = users.map(user => `
+                <div class="user-card" onclick="selectUser('${user.id}', '${user.name}')">
+                    <div class="user-name">${user.name}</div>
+                    <div class="user-interests">
+                        ${user.interests.slice(0, 3).join(' • ')}
+                    </div>
+                    <div class="user-stats">
+                        <span>👁️ ${user.viewed} مشاهدة</span>
+                        <span>🛒 ${user.purchased} مشترى</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('usersList').innerHTML = html;
+        }
+
+        // Select user
+        function selectUser(userId, userName) {
+            currentUser = userId;
+
+            // Update active state
+            document.querySelectorAll('.user-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.target.closest('.user-card').classList.add('active');
+
+            // Update title
+            document.getElementById('recommendationsTitle').textContent =
+                `✨ توصيات لـ ${userName}`;
+
+            // Show interaction button
+            document.getElementById('interactBtn').style.display = 'inline-block';
+
+            // Load recommendations
+            loadRecommendations();
+
+            addLog(`👤 تم اختيار ${userName}`);
+        }
+
+        // Load recommendations
+        async function loadRecommendations() {
+            if (!currentUser) return;
+
+            const area = document.getElementById('recommendationsArea');
+            area.innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري تحميل التوصيات المتقدمة...</p></div>';
+
+            showLearning('حساب التوصيات بالذكاء الاصطناعي...');
+
+            // Simulate AI processing
+            await sleep(1500);
+
+            // Generate mock recommendations
+            const recommendations = generateRecommendations(currentUser);
+
+            displayRecommendations(recommendations);
+            hideLearning();
+
+            addLog(`✨ تم توليد ${recommendations.length} توصية`);
+        }
+
+        // Generate mock recommendations
+        function generateRecommendations(userId) {
+            const products = {
+                'ahmed': [
+                    { id: 'laptop_001', title: 'لابتوب Dell Gaming', category: 'إلكترونيات', tags: ['laptop', 'gaming', 'dell'], score: 0.95, reason: 'similar' },
+                    { id: 'mouse_001', title: 'ماوس Logitech Gaming', category: 'إكسسوارات', tags: ['mouse', 'gaming'], score: 0.89, reason: 'similar' },
+                    { id: 'keyboard_001', title: 'كيبورد ميكانيكي', category: 'إكسسوارات', tags: ['keyboard', 'mechanical'], score: 0.85, reason: 'quality' },
+                    { id: 'monitor_001', title: 'شاشة 27 بوصة', category: 'إلكترونيات', tags: ['monitor', 'display'], score: 0.78, reason: 'trending' }
+                ],
+                'sara': [
+                    { id: 'dress_001', title: 'فستان صيفي', category: 'ملابس', tags: ['dress', 'summer'], score: 0.92, reason: 'similar' },
+                    { id: 'shoes_001', title: 'حذاء Nike', category: 'أحذية', tags: ['shoes', 'nike'], score: 0.88, reason: 'quality' },
+                    { id: 'bag_001', title: 'حقيبة يد', category: 'إكسسوارات', tags: ['bag', 'handbag'], score: 0.82, reason: 'similar' },
+                    { id: 'sunglasses_001', title: 'نظارات شمسية', category: 'إكسسوارات', tags: ['sunglasses'], score: 0.75, reason: 'trending' }
+                ],
+                'omar': [
+                    { id: 'book_python', title: 'كتاب Python المتقدم', category: 'كتب', tags: ['python', 'programming'], score: 0.96, reason: 'quality' },
+                    { id: 'book_web', title: 'تطوير الويب الحديث', category: 'كتب', tags: ['web', 'javascript'], score: 0.90, reason: 'similar' },
+                    { id: 'course_001', title: 'دورة AI', category: 'تعليم', tags: ['ai', 'course'], score: 0.85, reason: 'trending' },
+                    { id: 'book_algo', title: 'خوارزميات وبنى البيانات', category: 'كتب', tags: ['algorithms', 'data'], score: 0.80, reason: 'quality' }
+                ],
+                'fatima': [
+                    { id: 'yoga_mat', title: 'بساط يوغا', category: 'رياضة', tags: ['yoga', 'fitness'], score: 0.93, reason: 'similar' },
+                    { id: 'weights_001', title: 'أوزان رياضية', category: 'رياضة', tags: ['weights', 'fitness'], score: 0.87, reason: 'quality' },
+                    { id: 'protein_001', title: 'بروتين طبيعي', category: 'صحة', tags: ['protein', 'health'], score: 0.83, reason: 'trending' },
+                    { id: 'tracker_001', title: 'ساعة رياضية', category: 'إلكترونيات', tags: ['fitness', 'tracker'], score: 0.78, reason: 'similar' }
+                ]
+            };
+
+            return products[userId] || [];
+        }
+
+        // Display recommendations
+        function displayRecommendations(recommendations) {
+            const html = `
+                <div class="product-grid">
+                    ${recommendations.map(product => `
+                        <div class="product-card" onclick="viewProduct('${product.id}', '${product.title}')">
+                            <div class="product-header">
+                                <div class="category-badge">${product.category}</div>
+                                <div class="score-badge">${(product.score * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="product-title">${product.title}</div>
+                            <div class="product-tags">
+                                ${product.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                            </div>
+                            <span class="reason-badge reason-${product.reason}">
+                                ${getReasonText(product.reason)}
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('recommendationsArea').innerHTML = html;
+        }
+
+        // Get reason text
+        function getReasonText(reason) {
+            const reasons = {
+                'similar': '🎯 مشابه لما أعجبك',
+                'quality': '⭐ جودة عالية',
+                'trending': '🔥 رائج الآن'
+            };
+            return reasons[reason] || 'موصى به';
+        }
+
+        // View product
+        function viewProduct(productId, productTitle) {
+            showLearning('AI يسجل المشاهدة...');
+
+            setTimeout(() => {
+                hideLearning();
+                addLog(`👁️ ${productTitle} - تم تسجيل المشاهدة`);
+            }, 500);
+        }
+
+        // Simulate interaction
+        async function simulateInteraction() {
+            if (!currentUser) return;
+
+            showLearning('محاكاة عملية شراء...');
+
+            await sleep(1000);
+
+            addLog(`🛒 تم محاكاة شراء منتج - AI يتعلم!`);
+
+            showLearning('AI يحدث النماذج...');
+
+            await sleep(1000);
+
+            hideLearning();
+
+            addLog(`🧠 AI تعلم من هذا السلوك`);
+
+            // Reload recommendations
+            loadRecommendations();
+        }
+
+        // Load stats
+        async function loadStats() {
+            const html = `
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">زبائن نشطين</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">16</div>
+                    <div class="stat-label">منتجات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">21</div>
+                    <div class="stat-label">تفاعلات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">11</div>
+                    <div class="stat-label">مشتريات</div>
+                </div>
+            `;
+
+            document.getElementById('statsGrid').innerHTML = html;
+        }
+
+        // Show learning indicator
+        function showLearning(text) {
+            document.getElementById('learningText').textContent = text;
+            document.getElementById('learningIndicator').style.display = 'flex';
+        }
+
+        // Hide learning indicator
+        function hideLearning() {
+            document.getElementById('learningIndicator').style.display = 'none';
+        }
+
+        // Add to activity log
+        function addLog(message) {
+            const time = new Date().toLocaleTimeString('ar-EG');
+            activityLog.unshift({ time, message });
+
+            const html = activityLog.slice(0, 20).map(log => `
+                <div style="padding: 10px; border-bottom: 1px solid #e9ecef;">
+                    <strong style="color: #667eea;">${log.time}</strong><br>
+                    ${log.message}
+                </div>
+            `).join('');
+
+            document.getElementById('activityLog').innerHTML = html ||
+                '<div class="empty-state"><div class="empty-icon">📊</div><p>لا توجد أنشطة بعد</p></div>';
+        }
+
+        // Utility
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>

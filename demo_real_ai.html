@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Real AI Demo - تجربة واقعية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3em;
+            margin-bottom: 15px;
+            font-weight: 900;
+        }
+
+        .api-status {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+            animation: pulse 2s infinite;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr 2fr;
+            }
+
+            .activity-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .panel-header h2 {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-card:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .user-card.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 6px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .category-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .score-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            float: left;
+        }
+
+        .product-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+            clear: both;
+        }
+
+        .tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75em;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 900;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .activity-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .activity-time {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .activity-text {
+            color: #333;
+            margin-top: 5px;
+        }
+
+        .ai-badge {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Real AI Recommendation System</h1>
+            <p style="font-size: 1.2em; color: #666;">تجربة واقعية متصلة بـ API حقيقي</p>
+            <div class="api-status" id="apiStatus">
+                <span id="statusText">جاري الاتصال...</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Users Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>👥 الزبائن</h2>
+                </div>
+                <div class="stats-grid" id="userStats">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div id="usersList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 id="recsTitle">✨ التوصيات</h2>
+                    <button class="btn btn-primary" onclick="reload()" id="reloadBtn">🔄 تحديث</button>
+                </div>
+                <div id="recsArea">
+                    <div style="text-align: center; padding: 60px 20px; color: #6c757d;">
+                        <div style="font-size: 4em; margin-bottom: 20px;">🎯</div>
+                        <p>اختر زبوناً لعرض التوصيات الذكية</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Panel -->
+            <div class="panel activity-panel">
+                <div class="panel-header">
+                    <h2>📝 النشاط</h2>
+                </div>
+                <div id="activityLog" style="max-height: 500px; overflow-y: auto;">
+                    <div style="text-align: center; padding: 40px 20px; color: #6c757d;">
+                        <p>لا توجد أنشطة بعد</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5050';
+        let currentUser = null;
+        let activities = [];
+
+        // Check API
+        async function checkAPI() {
+            try {
+                const res = await fetch(`${API_BASE}/api/stats`);
+                if (res.ok) {
+                    document.getElementById('apiStatus').className = 'api-status status-online';
+                    document.getElementById('statusText').textContent = '✅ متصل بـ API حقيقي';
+                    return true;
+                }
+            } catch (e) {
+                document.getElementById('apiStatus').className = 'api-status status-offline';
+                document.getElementById('statusText').textContent = '❌ API غير متصل - شغّل real_api_server.py';
+                return false;
+            }
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_BASE}/api/users`);
+                const data = await res.json();
+
+                if (data.success) {
+                    displayUsers(data.users);
+                    updateUserStats(data.users);
+                    addActivity('✅ تم تحميل ' + data.users.length + ' زبون من API');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Display users
+        function displayUsers(users) {
+            const names = {
+                'ahmed': 'أحمد', 'sara': 'سارة',
+                'omar': 'عمر', 'fatima': 'فاطمة'
+            };
+
+            const html = users.map(u => `
+                <div class="user-card" onclick="selectUser('${u.id}', '${names[u.id] || u.id}')">
+                    <div style="font-weight: bold; margin-bottom: 8px;">${names[u.id] || u.id}</div>
+                    <div style="font-size: 0.85em; opacity: 0.8; margin-bottom: 8px;">
+                        ${u.interests.slice(0, 3).join(' • ')}
+                    </div>
+                    <div style="font-size: 0.8em; display: flex; gap: 10px;">
+                        <span>👁️ ${u.viewed}</span>
+                        <span>❤️ ${u.liked}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('usersList').innerHTML = html;
+        }
+
+        // Update stats
+        function updateUserStats(users) {
+            const totalViews = users.reduce((sum, u) => sum + u.viewed, 0);
+            const totalLikes = users.reduce((sum, u) => sum + u.liked, 0);
+
+            document.getElementById('userStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${users.length}</div>
+                    <div class="stat-label">زبائن</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${totalViews + totalLikes}</div>
+                    <div class="stat-label">تفاعلات</div>
+                </div>
+            `;
+        }
+
+        // Select user
+        function selectUser(userId, userName) {
+            currentUser = userId;
+
+            document.querySelectorAll('.user-card').forEach(c => c.classList.remove('active'));
+            event.target.closest('.user-card').classList.add('active');
+
+            document.getElementById('recsTitle').textContent = `✨ توصيات لـ ${userName}`;
+            document.getElementById('reloadBtn').style.display = 'inline-block';
+
+            loadRecommendations();
+            addActivity(`👤 اختيار ${userName}`);
+        }
+
+        // Load recommendations
+        async function loadRecommendations() {
+            if (!currentUser) return;
+
+            const area = document.getElementById('recsArea');
+            area.innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري تحميل التوصيات من AI...</p></div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/recommendations/${currentUser}?num=6`);
+                const data = await res.json();
+
+                if (data.success) {
+                    displayRecommendations(data.recommendations);
+                    addActivity(`<span class="ai-badge">🧠 AI</span> تم حساب ${data.count} توصية`);
+                }
+            } catch (e) {
+                area.innerHTML = '<div style="color: red; padding: 20px;">خطأ في الاتصال بـ API</div>';
+            }
+        }
+
+        // Display recommendations
+        function displayRecommendations(recs) {
+            if (recs.length === 0) {
+                document.getElementById('recsArea').innerHTML = '<div style="text-align:center; padding:40px;">لا توجد توصيات</div>';
+                return;
+            }
+
+            const html = `
+                <div class="product-grid">
+                    ${recs.map(r => `
+                        <div class="product-card" onclick="interact('${r.id}', '${r.title}')">
+                            <div class="category-badge">${r.category}</div>
+                            <div class="score-badge">${(r.score * 100).toFixed(0)}%</div>
+                            <div class="product-title">${r.title}</div>
+                            <div class="tags">
+                                ${r.tags.slice(0, 3).map(t => `<span class="tag">#${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('recsArea').innerHTML = html;
+        }
+
+        // Interact with product
+        async function interact(productId, title) {
+            if (!currentUser) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/interact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser,
+                        content_id: productId,
+                        type: 'view'
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    addActivity(`<span class="ai-badge">🧠 AI</span> تم تسجيل مشاهدة: ${title}`);
+
+                    // Reload recommendations
+                    setTimeout(() => loadRecommendations(), 1000);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Add activity
+        function addActivity(text) {
+            const now = new Date();
+            const time = now.toLocaleTimeString('ar-EG');
+
+            activities.unshift({ time, text });
+            activities = activities.slice(0, 20);
+
+            const html = activities.map(a => `
+                <div class="activity-item">
+                    <div class="activity-time">${a.time}</div>
+                    <div class="activity-text">${a.text}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('activityLog').innerHTML = html;
+        }
+
+        // Reload
+        function reload() {
+            loadRecommendations();
+        }
+
+        // Init
+        async function init() {
+            const online = await checkAPI();
+            if (online) {
+                await loadUsers();
+                addActivity('🚀 النظام جاهز');
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
