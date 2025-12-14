@@ -1,0 +1,41 @@
+/*
+ * هذا هو ملف الـ CSS العام.
+ * يستخدم لـ CSS Variables، و إعدادات الـ Reset، وتطبيق الخطوط الأساسية.
+ */
+
+:root {
+  /*
+  ** تعريف الألوان لي كيعتمد عليها المتجر في حالة الـ CSS العادي
+  */
+  --color-primary: #DAA520; /* اللون الذهبي */
+  --color-dark: #333333; /* لون النصوص */
+  --color-light: #F8F8F8; /* لون الخلفية */
+
+  /*
+  ** متغير الخطوط لي تم توليدو من Next/Font
+  */
+  --font-tajawal: var(--font-tajawal);
+}
+
+/* إعادة تعيين الـ CSS الأساسي (CSS Reset) */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  /* تطبيق الخط الرئيسي للمتجر */
+  font-family: var(--font-tajawal), sans-serif;
+  color: var(--color-dark);
+  background-color: var(--color-light);
+  line-height: 1.6; /* مسافة مريحة بين الأسطر */
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
