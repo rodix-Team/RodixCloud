@@ -11,7 +11,7 @@ export const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
 });
 
-// System prompt for Al-Awad - The Honey Expert
+// System prompt for Al-Awad - The Honey Expe rt
 export const SYSTEM_PROMPT = `أنت العواد 🐝، مساعد ذكي متخصص في العسل الطبيعي المغربي لمتجر "عسل تارودانت الذهبي".
 
 **شخصيتك:**
