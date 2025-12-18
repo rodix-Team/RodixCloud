@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/protected-route";
 import { DashboardLayout, DashboardSection } from "@/components/dashboard";
 import { http } from "@/lib/http";
+import { useNotificationStore } from "@/store/notification-store";
 import {
   ShoppingCart, Search, Filter, Eye, Truck, Package,
   ChevronDown, Check, X, Clock, AlertTriangle,
   CheckCircle, XCircle, RefreshCw, MoreHorizontal,
   Calendar, User, DollarSign, MapPin, Printer,
-  ChevronLeft, ChevronRight, LucideIcon
+  ChevronLeft, ChevronRight, LucideIcon, Volume2, VolumeX, Bell
 } from "lucide-react";
 
 // Order Types
@@ -24,11 +25,18 @@ interface OrderCustomer {
 interface OrderItem {
   id: number;
   product_id: number;
-  product_name: string;
+  product_name?: string;
+  product_image?: string;
+  product?: {
+    id: number;
+    name: string;
+    image_url?: string;
+    price?: string;
+  };
   variant_name?: string;
   quantity: number;
   price: string;
-  total: string;
+  total?: string;
 }
 
 interface Order {
@@ -36,7 +44,10 @@ interface Order {
   order_number: string;
   customer_name: string;
   customer_email: string;
+  guest_email?: string;
   customer_phone?: string;
+  customer_address?: string;
+  customer_orders_count?: number;
   items: OrderItem[];
   items_count?: number;
   subtotal: string;
@@ -45,6 +56,10 @@ interface Order {
   total: string;
   status: OrderStatus;
   payment_status: string;
+  fulfillment_status?: string;
+  delivery_status?: string;
+  delivery_method?: string;
+  channel?: string;
   shipping_address?: string;
   billing_address?: string;
   notes?: string;
@@ -85,6 +100,14 @@ export default function OrdersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
   const [showStatusDropdown, setShowStatusDropdown] = useState<number | null>(null);
+  const [hoveredCustomer, setHoveredCustomer] = useState<number | null>(null);
+  const [expandedItems, setExpandedItems] = useState<number | null>(null);
+  const [isPolling, setIsPolling] = useState(true);
+  const [lastPoll, setLastPoll] = useState<Date | null>(null);
+  const previousTotalRef = useRef<number>(0);
+
+  // Notification store
+  const { addNotification, soundEnabled, toggleSound, lastOrderCount, setLastOrderCount } = useNotificationStore();
 
   // Fetch orders
   const fetchOrders = useCallback(async (page = 1) => {
@@ -114,6 +137,53 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchOrders(currentPage);
   }, [fetchOrders, currentPage]);
+
+  // Polling for real-time updates (every 10 seconds)
+  useEffect(() => {
+    if (!isPolling) return;
+
+    const pollOrders = async () => {
+      try {
+        const res = await http.get(`/orders?page=1`);
+        const newTotal = res.data.total || 0;
+        const newOrders = res.data.data || [];
+
+        // Check if there are new orders
+        if (previousTotalRef.current > 0 && newTotal > previousTotalRef.current) {
+          const newOrderCount = newTotal - previousTotalRef.current;
+          const latestOrder = newOrders[0];
+
+          addNotification({
+            type: "order",
+            title: `🎉 طلب جديد #${latestOrder?.order_number || ''}`,
+            message: `${latestOrder?.customer_name || 'Unknown'} - $${latestOrder?.total || '0'}`,
+            data: { orderId: latestOrder?.id }
+          });
+
+          // Update orders list if on page 1
+          if (currentPage === 1) {
+            setOrders(newOrders);
+            setTotal(newTotal);
+          }
+        }
+
+        previousTotalRef.current = newTotal;
+        setLastOrderCount(newTotal);
+        setLastPoll(new Date());
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    };
+
+    // Initial set
+    if (previousTotalRef.current === 0 && total > 0) {
+      previousTotalRef.current = total;
+      setLastOrderCount(total);
+    }
+
+    const interval = setInterval(pollOrders, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
+  }, [isPolling, currentPage, total, addNotification, setLastOrderCount]);
 
   // Debounced search
   useEffect(() => {
@@ -208,15 +278,52 @@ export default function OrdersPage() {
                 <ShoppingCart className="h-4 w-4 text-emerald-400" />
                 <span className="text-sm font-medium text-emerald-400">{total} orders</span>
               </div>
+              {/* Real-time indicator */}
+              {isPolling && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full">
+                  <span className="h-2 w-2 bg-blue-400 rounded-full animate-pulse" />
+                  <span className="text-xs text-blue-400">Live</span>
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => fetchOrders(currentPage)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium rounded-lg transition-colors"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Sound toggle */}
+              <button
+                onClick={toggleSound}
+                className={`p-2.5 rounded-lg transition-colors ${soundEnabled
+                  ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                  }`}
+                title={soundEnabled ? 'Sound ON' : 'Sound OFF'}
+              >
+                {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+              {/* Polling toggle */}
+              <button
+                onClick={() => setIsPolling(!isPolling)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isPolling
+                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                  : 'bg-neutral-800 text-neutral-400'
+                  }`}
+              >
+                {isPolling ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
+              </button>
+              <button
+                onClick={() => fetchOrders(currentPage)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium rounded-lg transition-colors"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
           </div>
+
+          {/* Last poll info */}
+          {lastPoll && (
+            <div className="text-xs text-neutral-500">
+              آخر تحديث: {lastPoll.toLocaleTimeString('ar-SA')} • التحديث التالي خلال 10 ثواني
+            </div>
+          )}
 
           {/* Status Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -334,14 +441,83 @@ export default function OrdersPage() {
                               #{order.order_number}
                             </Link>
                           </td>
-                          <td className="py-4 px-4">
-                            <div>
-                              <p className="text-sm font-medium text-neutral-200">{order.customer_name}</p>
+                          <td className="py-4 px-4 relative">
+                            {/* Customer with Hover Popup */}
+                            <div
+                              className="relative"
+                              onMouseEnter={() => setHoveredCustomer(order.id)}
+                              onMouseLeave={() => setHoveredCustomer(null)}
+                            >
+                              <p className="text-sm font-medium text-neutral-200 cursor-pointer hover:text-emerald-400">
+                                {order.customer_name || order.guest_email || 'Guest'}
+                              </p>
                               <p className="text-xs text-neutral-500">{order.customer_email}</p>
+
+                              {/* Customer Popup */}
+                              {hoveredCustomer === order.id && (
+                                <div className="absolute left-0 top-full mt-1 z-50 w-64 p-3 bg-neutral-800 border border-neutral-700 rounded-lg shadow-xl">
+                                  <p className="text-sm font-medium text-neutral-100">{order.customer_name || 'Guest'}</p>
+                                  {order.shipping_address && (
+                                    <p className="text-xs text-neutral-400 mt-1 flex items-start gap-1">
+                                      <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                      {order.shipping_address}
+                                    </p>
+                                  )}
+                                  {order.customer_phone && (
+                                    <p className="text-xs text-neutral-400 mt-1">📞 {order.customer_phone}</p>
+                                  )}
+                                  <Link
+                                    href={`/dashboard/customers`}
+                                    className="text-xs text-emerald-400 hover:text-emerald-300 mt-2 block"
+                                  >
+                                    View customer →
+                                  </Link>
+                                </div>
+                              )}
                             </div>
                           </td>
-                          <td className="py-4 px-4">
-                            <span className="text-sm text-neutral-400">{order.items_count || order.items?.length || 0} items</span>
+                          <td className="py-4 px-4 relative">
+                            {/* Items with Dropdown */}
+                            <button
+                              onClick={() => setExpandedItems(expandedItems === order.id ? null : order.id)}
+                              className="flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200"
+                            >
+                              <span>{order.items_count || order.items?.length || 0} items</span>
+                              <ChevronDown className={`h-3 w-3 transition-transform ${expandedItems === order.id ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Items Dropdown */}
+                            {expandedItems === order.id && order.items && order.items.length > 0 && (
+                              <div className="absolute left-0 top-full mt-1 z-50 w-72 p-2 bg-neutral-800 border border-neutral-700 rounded-lg shadow-xl">
+                                {order.items.slice(0, 5).map((item, idx) => {
+                                  const imgUrl = item.product?.image_url || item.product_image;
+                                  const productName = item.product?.name || item.product_name || 'Product';
+                                  return (
+                                    <div key={idx} className="flex items-center gap-3 p-2 hover:bg-neutral-700/50 rounded">
+                                      <div className="h-10 w-10 bg-neutral-700 rounded flex items-center justify-center overflow-hidden">
+                                        {imgUrl ? (
+                                          <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+                                        ) : (
+                                          <Package className="h-5 w-5 text-neutral-500" />
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-neutral-200 truncate">{productName}</p>
+                                        {item.variant_name && (
+                                          <p className="text-[10px] text-neutral-500">{item.variant_name}</p>
+                                        )}
+                                      </div>
+                                      <span className="text-xs text-neutral-400">×{item.quantity}</span>
+                                    </div>
+                                  );
+                                })}
+                                {order.items.length > 5 && (
+                                  <p className="text-xs text-neutral-500 text-center py-1">
+                                    +{order.items.length - 5} more
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm font-medium text-neutral-200">${order.total}</span>
