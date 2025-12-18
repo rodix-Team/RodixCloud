@@ -14,6 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 import { useAuthStore } from "@/store/app-store";
+import { useNotificationStore, useUnreadCount } from "@/store/notification-store";
 
 type HeaderProps = {
   title?: string;
@@ -29,32 +30,21 @@ export function DashboardHeader({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Mock notifications
-  const notifications = [
-    {
-      id: 1,
-      title: "New order #1234",
-      message: "Customer from Casablanca",
-      time: "2 min ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "Payment received",
-      message: "$420 from Dubai",
-      time: "15 min ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      title: "Low stock alert",
-      message: "Product X is running low",
-      time: "1 hour ago",
-      unread: false,
-    },
-  ];
+  // Real notifications from store
+  const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const unreadCount = useUnreadCount();
 
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  // Format time ago
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(date).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "الآن";
+    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+    return `منذ ${Math.floor(diffHours / 24)} يوم`;
+  };
 
   return (
     <header className="h-16 border-b border-neutral-800 px-6 flex items-center justify-between bg-neutral-950/90 backdrop-blur sticky top-0 z-40">
@@ -122,7 +112,6 @@ export function DashboardHeader({
               </span>
             )}
           </button>
-
           <AnimatePresence>
             {showNotifications && (
               <motion.div
@@ -133,42 +122,53 @@ export function DashboardHeader({
               >
                 <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between">
                   <span className="text-sm font-medium text-neutral-200">
-                    Notifications
+                    الإشعارات {unreadCount > 0 && `(${unreadCount})`}
                   </span>
-                  <button className="text-xs text-emerald-400 hover:text-emerald-300">
-                    Mark all read
-                  </button>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-xs text-emerald-400 hover:text-emerald-300"
+                    >
+                      قراءة الكل
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-80 overflow-y-auto">
-                  {notifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className={`px-4 py-3 border-b border-neutral-800/50 hover:bg-neutral-800/50 cursor-pointer ${
-                        notif.unread ? "bg-emerald-500/5" : ""
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {notif.unread && (
-                          <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                        )}
-                        <div className={notif.unread ? "" : "ml-5"}>
-                          <p className="text-sm text-neutral-200">
-                            {notif.title}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {notif.message}
-                          </p>
-                          <p className="text-[10px] text-neutral-600 mt-1">
-                            {notif.time}
-                          </p>
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-neutral-500 text-sm">
+                      لا توجد إشعارات
+                    </div>
+                  ) : (
+                    notifications.slice(0, 10).map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => markAsRead(notif.id)}
+                        className={`px-4 py-3 border-b border-neutral-800/50 hover:bg-neutral-800/50 cursor-pointer ${!notif.read ? "bg-emerald-500/5" : ""
+                          }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {!notif.read && (
+                            <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                          )}
+                          <div className={!notif.read ? "" : "ml-5"}>
+                            <p className="text-sm text-neutral-200">
+                              {notif.title}
+                            </p>
+                            <p className="text-xs text-neutral-500">
+                              {notif.message}
+                            </p>
+                            <p className="text-[10px] text-neutral-600 mt-1">
+                              {formatTimeAgo(notif.time)}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
                 <div className="px-4 py-2 bg-neutral-800/50">
                   <button className="w-full text-xs text-neutral-400 hover:text-neutral-200">
-                    View all notifications
+                    عرض كل الإشعارات
                   </button>
                 </div>
               </motion.div>

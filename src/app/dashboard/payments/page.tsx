@@ -21,12 +21,30 @@ interface PaymentMethod {
 
 const PAYMENT_METHODS: PaymentMethod[] = [
     {
+        id: "cod",
+        name: "الدفع عند التسليم",
+        type: "cod",
+        enabled: true,
+        icon: Banknote,
+        description: "Cash on Delivery - الدفع نقداً عند استلام الطلب",
+        fee: "بدون رسوم",
+    },
+    {
+        id: "bank",
+        name: "تحويل بنكي",
+        type: "bank",
+        enabled: false,
+        icon: Building,
+        description: "التحويل المباشر للحساب البنكي",
+        fee: "بدون رسوم",
+    },
+    {
         id: "stripe",
         name: "Stripe",
         type: "card",
-        enabled: true,
+        enabled: false,
         icon: CreditCard,
-        description: "Accept credit and debit cards",
+        description: "بطاقات الائتمان والخصم",
         fee: "2.9% + $0.30",
     },
     {
@@ -35,26 +53,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
         type: "wallet",
         enabled: false,
         icon: Wallet,
-        description: "Accept PayPal payments",
+        description: "الدفع عبر PayPal",
         fee: "3.49% + $0.49",
-    },
-    {
-        id: "bank",
-        name: "Bank Transfer",
-        type: "bank",
-        enabled: true,
-        icon: Building,
-        description: "Direct bank transfers",
-        fee: "No fee",
-    },
-    {
-        id: "cod",
-        name: "Cash on Delivery",
-        type: "cod",
-        enabled: true,
-        icon: Banknote,
-        description: "Pay when receiving the order",
-        fee: "No fee",
     },
 ];
 

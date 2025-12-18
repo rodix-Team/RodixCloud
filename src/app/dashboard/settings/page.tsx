@@ -7,7 +7,7 @@ import { http } from "@/lib/http";
 import {
     Settings, Store, Globe, CreditCard, Bell, Shield, Palette,
     Save, Loader2, Check, AlertTriangle, Mail, Phone, MapPin,
-    DollarSign, Percent, Image as ImageIcon
+    DollarSign, Percent, Image as ImageIcon, ShoppingCart, Users
 } from "lucide-react";
 
 interface StoreSettings {
@@ -19,6 +19,10 @@ interface StoreSettings {
     timezone: string;
     tax_rate: number;
     logo_url: string;
+    // Checkout settings
+    enable_guest_checkout: boolean;
+    require_phone: boolean;
+    require_address: boolean;
 }
 
 const CURRENCIES = [
@@ -57,6 +61,10 @@ export default function SettingsPage() {
         timezone: "UTC",
         tax_rate: 0,
         logo_url: "",
+        // Checkout defaults
+        enable_guest_checkout: true,
+        require_phone: false,
+        require_address: true,
     });
 
     useEffect(() => {
@@ -104,6 +112,7 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: "general", label: "General", icon: Store },
+        { id: "checkout", label: "Checkout", icon: ShoppingCart },
         { id: "payments", label: "Payments", icon: CreditCard },
         { id: "notifications", label: "Notifications", icon: Bell },
         { id: "security", label: "Security", icon: Shield },
@@ -337,6 +346,99 @@ export default function SettingsPage() {
                                 </div>
                             </DashboardSection>
                         </div>
+                    )}
+
+                    {/* Checkout Tab */}
+                    {activeTab === "checkout" && (
+                        <DashboardSection>
+                            <h3 className="text-lg font-semibold text-neutral-100 mb-6 flex items-center gap-2">
+                                <ShoppingCart className="h-5 w-5 text-emerald-400" />
+                                Checkout Settings
+                            </h3>
+                            <div className="space-y-6">
+                                {/* Guest Checkout Toggle */}
+                                <div className="flex items-center justify-between p-4 bg-neutral-800/50 rounded-xl border border-neutral-700">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                            <Users className="h-6 w-6 text-amber-400" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-neutral-100">Guest Checkout</h4>
+                                            <p className="text-xs text-neutral-500">
+                                                السماح للعملاء بالشراء بدون إنشاء حساب
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSettings(prev => ({ ...prev, enable_guest_checkout: !prev.enable_guest_checkout }))}
+                                        className={`relative w-14 h-7 rounded-full transition-colors ${settings.enable_guest_checkout
+                                            ? 'bg-emerald-500'
+                                            : 'bg-neutral-600'
+                                            }`}
+                                    >
+                                        <span
+                                            className={`absolute top-0.5 w-6 h-6 bg-white rounded-full transition-transform ${settings.enable_guest_checkout ? 'left-7' : 'left-0.5'
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Require Phone Toggle */}
+                                <div className="flex items-center justify-between p-4 bg-neutral-800/50 rounded-xl border border-neutral-700">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                            <Phone className="h-6 w-6 text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-neutral-100">Require Phone Number</h4>
+                                            <p className="text-xs text-neutral-500">
+                                                إلزام العميل بإدخال رقم الهاتف
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSettings(prev => ({ ...prev, require_phone: !prev.require_phone }))}
+                                        className={`relative w-14 h-7 rounded-full transition-colors ${settings.require_phone
+                                            ? 'bg-emerald-500'
+                                            : 'bg-neutral-600'
+                                            }`}
+                                    >
+                                        <span
+                                            className={`absolute top-0.5 w-6 h-6 bg-white rounded-full transition-transform ${settings.require_phone ? 'left-7' : 'left-0.5'
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Require Address Toggle */}
+                                <div className="flex items-center justify-between p-4 bg-neutral-800/50 rounded-xl border border-neutral-700">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                                            <MapPin className="h-6 w-6 text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-neutral-100">Require Shipping Address</h4>
+                                            <p className="text-xs text-neutral-500">
+                                                إلزام العميل بإدخال عنوان الشحن
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSettings(prev => ({ ...prev, require_address: !prev.require_address }))}
+                                        className={`relative w-14 h-7 rounded-full transition-colors ${settings.require_address
+                                            ? 'bg-emerald-500'
+                                            : 'bg-neutral-600'
+                                            }`}
+                                    >
+                                        <span
+                                            className={`absolute top-0.5 w-6 h-6 bg-white rounded-full transition-transform ${settings.require_address ? 'left-7' : 'left-0.5'
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
+
+                            </div>
+                        </DashboardSection>
                     )}
 
                     {/* Payments Tab */}
