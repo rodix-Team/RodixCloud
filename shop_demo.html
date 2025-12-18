@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛒 TechStore - متجر التقنية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: white;
+            font-size: 1.8em;
+            font-weight: 800;
+        }
+
+        .logo span {
+            color: #e94560;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: #ccc;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #e94560;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .user-btn:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+        }
+
+        .cart-icon {
+            color: white;
+            font-size: 1.5em;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e94560;
+            color: white;
+            font-size: 0.6em;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .ai-panel {
+                order: -1;
+            }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .sidebar h3 {
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .category-list {
+            list-style: none;
+        }
+
+        .category-list li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-list li:hover {
+            background: #f8f9fa;
+        }
+
+        .category-list li.active {
+            background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+            color: white;
+        }
+
+        .category-count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.85em;
+        }
+
+        /* Products Grid */
+        .products-section h2 {
+            color: #1a1a2e;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(233, 69, 96, 0.15);
+        }
+
+        .product-image {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            position: relative;
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e94560;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-category {
+            color: #e94560;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .product-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 1.4em;
+            font-weight: 800;
+            color: #e94560;
+            margin-bottom: 15px;
+        }
+
+        .product-price span {
+            font-size: 0.6em;
+            color: #999;
+            text-decoration: line-through;
+            margin-right: 10px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-cart {
+            flex: 1;
+            background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cart:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-wishlist {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #e94560;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2em;
+        }
+
+        .btn-wishlist:hover {
+            background: #e94560;
+            color: white;
+        }
+
+        /* AI Panel */
+        .ai-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .ai-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .ai-header h3 {
+            color: #1a1a2e;
+        }
+
+        .ai-status {
+            font-size: 0.8em;
+            color: #28a745;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ai-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .recommendation-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-right: 4px solid transparent;
+        }
+
+        .recommendation-card:hover {
+            background: white;
+            border-right-color: #e94560;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .rec-score {
+            background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 700;
+        }
+
+        .rec-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+
+        .rec-reason {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        /* User Selector */
+        .user-selector {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .user-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+        }
+
+        .user-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .user-selector select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-icon {
+            font-size: 1.5em;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">Tech<span>Store</span> 🛒</div>
+            <nav class="nav-links">
+                <a href="#">الرئيسية</a>
+                <a href="#">المنتجات</a>
+                <a href="#">العروض</a>
+                <a href="#">تواصل معنا</a>
+            </nav>
+            <div class="user-menu">
+                <div class="cart-icon">
+                    🛒
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <button class="user-btn" id="currentUser">👤 أحمد</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h3>📂 التصنيفات</h3>
+            <ul class="category-list">
+                <li class="active" data-category="all">
+                    الكل <span class="category-count">16</span>
+                </li>
+                <li data-category="إلكترونيات">
+                    💻 إلكترونيات <span class="category-count">6</span>
+                </li>
+                <li data-category="إكسسوارات">
+                    🎮 إكسسوارات <span class="category-count">2</span>
+                </li>
+                <li data-category="ملابس">
+                    👕 ملابس <span class="category-count">3</span>
+                </li>
+                <li data-category="كتب">
+                    📚 كتب <span class="category-count">3</span>
+                </li>
+                <li data-category="رياضة">
+                    🏋️ رياضة <span class="category-count">2</span>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Products -->
+        <main class="products-section">
+            <h2>🛍️ منتجاتنا</h2>
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be loaded here -->
+            </div>
+        </main>
+
+        <!-- AI Panel -->
+        <aside class="ai-panel">
+            <div class="ai-header">
+                <div class="ai-icon">🧠</div>
+                <div>
+                    <h3>توصيات ذكية</h3>
+                    <span class="ai-status">AI نشط</span>
+                </div>
+            </div>
+
+            <div class="user-selector">
+                <label>👤 اختر المستخدم:</label>
+                <select id="userSelect" onchange="changeUser()">
+                    <option value="ahmed">أحمد - مهتم بالتقنية</option>
+                    <option value="sara">سارة - عاشقة الموضة</option>
+                    <option value="omar">عمر - محب البرمجة</option>
+                    <option value="fatima">فاطمة - رياضية</option>
+                </select>
+            </div>
+
+            <div id="recommendations">
+                <!-- AI recommendations will appear here -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-content">
+            <span class="notification-icon" id="notifIcon">🧠</span>
+            <span id="notifText">AI يتعلم من تفاعلاتك...</span>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-overlay" id="loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>جاري تحميل التوصيات الذكية...</p>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:5050';
+        let currentUser = 'ahmed';
+        let cartCount = 0;
+        let products = [];
+
+        const productEmojis = {
+            'إلكترونيات': '💻',
+            'إكسسوارات': '🎮',
+            'ملابس': '👕',
+            'أحذية': '👟',
+            'كتب': '📚',
+            'رياضة': '🏋️',
+            'صحة': '💊'
+        };
+
+        const prices = {
+            'laptop_hp': 4999,
+            'laptop_dell': 7999,
+            'macbook': 12999,
+            'mouse_log': 299,
+            'keyboard_mech': 599,
+            'monitor_27': 1999,
+            'tshirt_nike': 199,
+            'jeans_levis': 399,
+            'jacket_north': 899,
+            'shoes_nike': 699,
+            'book_python': 89,
+            'book_ai': 129,
+            'book_web': 99,
+            'yoga_mat': 149,
+            'weights_set': 399,
+            'protein_whey': 249
+        };
+
+        // Initialize
+        async function init() {
+            showLoading();
+            await loadProducts();
+            await loadRecommendations();
+            hideLoading();
+        }
+
+        // Load products
+        async function loadProducts() {
+            try {
+                const res = await fetch(`${API}/api/content`);
+                const data = await res.json();
+                if (data.success) {
+                    products = data.content;
+                    renderProducts(products);
+                }
+            } catch (e) {
+                console.error('Error loading products:', e);
+                renderProducts([]);
+            }
+        }
+
+        // Render products
+        function renderProducts(items) {
+            const grid = document.getElementById('productsGrid');
+
+            if (items.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">لا توجد منتجات</p>';
+                return;
+            }
+
+            grid.innerHTML = items.map(p => `
+                <div class="product-card" onclick="viewProduct('${p.id}', '${p.title}')">
+                    <div class="product-image">
+                        ${productEmojis[p.category] || '📦'}
+                        ${p.trending_score > 0.5 ? '<span class="product-badge">🔥 رائج</span>' : ''}
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">${p.category}</div>
+                        <div class="product-title">${p.title}</div>
+                        <div class="product-price">
+                            ${prices[p.id] || 299} ر.س
+                            <span>${Math.floor((prices[p.id] || 299) * 1.2)} ر.س</span>
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn-cart" onclick="event.stopPropagation(); addToCart('${p.id}', '${p.title}')">
+                                🛒 أضف للسلة
+                            </button>
+                            <button class="btn-wishlist" onclick="event.stopPropagation(); addToWishlist('${p.id}', '${p.title}')">
+                                ❤️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load recommendations
+        async function loadRecommendations() {
+            const container = document.getElementById('recommendations');
+
+            try {
+                const res = await fetch(`${API}/api/recommendations/${currentUser}?num=5`);
+                const data = await res.json();
+
+                if (data.success && data.recommendations.length > 0) {
+                    container.innerHTML = data.recommendations.map(r => {
+                        const score = Math.round(r.score * 100);
+                        const emoji = productEmojis[r.category] || '📦';
+
+                        let reason = '';
+                        if (score >= 50) reason = '✨ مثالي لك';
+                        else if (score >= 30) reason = '👍 قد يعجبك';
+                        else reason = '💡 اكتشف جديد';
+
+                        return `
+                            <div class="recommendation-card" onclick="viewProduct('${r.id}', '${r.title}')">
+                                <div class="rec-header">
+                                    <span>${emoji}</span>
+                                    <span class="rec-score">${score}%</span>
+                                </div>
+                                <div class="rec-title">${r.title}</div>
+                                <div class="rec-reason">${reason}</div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">تصفح المنتجات لتفعيل التوصيات!</p>';
+                }
+            } catch (e) {
+                container.innerHTML = '<p style="text-align:center; color:#e94560;">خطأ في الاتصال بـ AI</p>';
+            }
+        }
+
+        // View product
+        async function viewProduct(productId, title) {
+            showNotification('👁️', `شاهدت: ${title}`);
+
+            try {
+                await fetch(`${API}/api/interact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser,
+                        content_id: productId,
+                        type: 'view'
+                    })
+                });
+
+                setTimeout(() => {
+                    showNotification('🧠', 'AI يحدث التوصيات...');
+                    loadRecommendations();
+                }, 1000);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Add to cart
+        async function addToCart(productId, title) {
+            cartCount++;
+            document.getElementById('cartCount').textContent = cartCount;
+
+            showNotification('🛒', `تمت الإضافة: ${title}`);
+
+            try {
+                await fetch(`${API}/api/interact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser,
+                        content_id: productId,
+                        type: 'like',
+                        rating: 5
+                    })
+                });
+
+                setTimeout(() => {
+                    showNotification('🧠', 'AI تعلم من شرائك!');
+                    loadRecommendations();
+                }, 1500);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Add to wishlist
+        async function addToWishlist(productId, title) {
+            showNotification('❤️', `أضيف للمفضلة: ${title}`);
+
+            try {
+                await fetch(`${API}/api/interact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser,
+                        content_id: productId,
+                        type: 'like',
+                        rating: 4
+                    })
+                });
+
+                loadRecommendations();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Change user
+        function changeUser() {
+            currentUser = document.getElementById('userSelect').value;
+            const names = { ahmed: 'أحمد', sara: 'سارة', omar: 'عمر', fatima: 'فاطمة' };
+            document.getElementById('currentUser').textContent = '👤 ' + names[currentUser];
+
+            showNotification('👤', `تم التبديل إلى: ${names[currentUser]}`);
+            loadRecommendations();
+        }
+
+        // Filter by category
+        document.querySelectorAll('.category-list li').forEach(li => {
+            li.addEventListener('click', () => {
+                document.querySelectorAll('.category-list li').forEach(l => l.classList.remove('active'));
+                li.classList.add('active');
+
+                const category = li.dataset.category;
+                if (category === 'all') {
+                    renderProducts(products);
+                } else {
+                    renderProducts(products.filter(p => p.category === category));
+                }
+            });
+        });
+
+        // Show notification
+        function showNotification(icon, text) {
+            const notif = document.getElementById('notification');
+            document.getElementById('notifIcon').textContent = icon;
+            document.getElementById('notifText').textContent = text;
+            notif.classList.add('show');
+
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+
+        // Loading
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 مساعد العسل الذكي - النحلة الذهبية</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #FFB800, #FF6B35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2em;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 18px 22px;
+            border-radius: 20px;
+            animation: fadeIn 0.3s ease;
+            line-height: 1.7;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            background: linear-gradient(135deg, #FFB800, #FF6B35);
+            color: white;
+            align-self: flex-start;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.user {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            align-self: flex-end;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message .name {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Product Cards in Chat */
+        .product-suggestions {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .mini-product {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 15px;
+            min-width: 180px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .mini-product:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .mini-product .name {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .mini-product .price {
+            color: #FFD700;
+            font-weight: 900;
+        }
+
+        /* Quick Replies */
+        .quick-replies {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-reply {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .quick-reply:hover {
+            background: white;
+            color: #1a1a2e;
+        }
+
+        /* Input Area */
+        .chat-input {
+            display: flex;
+            gap: 15px;
+            padding: 20px 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 18px 25px;
+            border-radius: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1em;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .chat-input input:focus {
+            border-color: #FFB800;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .chat-input input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #FFB800, #FF6B35);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3em;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(255, 184, 0, 0.4);
+        }
+
+        /* Typing Indicator */
+        .typing {
+            display: flex;
+            gap: 5px;
+            padding: 15px 20px;
+        }
+
+        .typing span {
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Voice Button */
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3em;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .voice-btn.recording {
+            background: #ff3838;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat .number {
+            font-size: 2em;
+            font-weight: 900;
+            color: #FFB800;
+        }
+
+        @media (max-width: 768px) {
+            .chat-messages {
+                height: 400px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 مساعد العسل الذكي</h1>
+            <p>اسألني عن أي نوع عسل وسأساعدك!</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+
+            <div class="chat-input">
+                <button class="voice-btn" onclick="toggleVoice()" id="voiceBtn">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="number">15+</div>
+                <div>نوع عسل</div>
+            </div>
+            <div class="stat">
+                <div class="number">24/7</div>
+                <div>متاح دائماً</div>
+            </div>
+            <div class="stat">
+                <div class="number">AI</div>
+                <div>ذكاء اصطناعي</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Product Database
+        const products = {
+            سدر: { name: "عسل السدر الجبلي", price: 350, benefits: "تقوية المناعة، مفيد للمعدة، طاقة طبيعية", category: "فاخر" },
+            مانوكا: { name: "عسل المانوكا", price: 450, benefits: "مضاد للبكتيريا، شفاء الجروح، الجهاز الهضمي", category: "علاجي" },
+            اوكالبتوس: { name: "عسل الأوكالبتوس", price: 160, benefits: "السعال، البرد، الجهاز التنفسي", category: "علاجي" },
+            غابة: { name: "عسل الغابة السوداء", price: 200, benefits: "غني بالمعادن، مضادات الأكسدة", category: "طبيعي" },
+            حمضيات: { name: "عسل الحمضيات", price: 150, benefits: "فيتامين C، مناعة، طعم منعش", category: "فواكه" },
+            سمسم: { name: "عسل السمسم", price: 140, benefits: "طاقة، رياضة، فيتامينات", category: "مقوي" },
+            خزامى: { name: "عسل الخزامى", price: 190, benefits: "استرخاء، نوم، تهدئة الأعصاب", category: "زهور" },
+            زعتر: { name: "عسل الزعتر", price: 170, benefits: "الجهاز التنفسي، السعال، مطهر", category: "علاجي" },
+            ملكي: { name: "عسل الغذاء الملكي", price: 380, benefits: "منشط عام، مقوي، حيوية", category: "خاص" }
+        };
+
+        // Keywords for understanding
+        const keywords = {
+            سعال: ["اوكالبتوس", "زعتر", "سدر"],
+            برد: ["اوكالبتوس", "زعتر", "مانوكا"],
+            مناعة: ["سدر", "مانوكا", "حمضيات"],
+            طاقة: ["سمسم", "سدر", "ملكي"],
+            رياضة: ["سمسم", "ملكي", "سدر"],
+            نوم: ["خزامى"],
+            استرخاء: ["خزامى"],
+            هدية: ["مانوكا", "سدر", "ملكي"],
+            فاخر: ["مانوكا", "سدر", "ملكي"],
+            اطفال: ["حمضيات", "غابة"],
+            معدة: ["سدر", "مانوكا"],
+            رخيص: ["سمسم", "حمضيات"],
+            اقتصادي: ["سمسم", "حمضيات"]
+        };
+
+        // Initialize
+        window.onload = function () {
+            addBotMessage(`مرحباً بك في متجر النحلة الذهبية! 🍯
+            
+أنا مساعدك الذكي، يمكنني مساعدتك في:
+• اختيار العسل المناسب لاحتياجاتك
+• معرفة فوائد كل نوع
+• مقارنة الأسعار`, [
+                "أبحث عن عسل للسعال",
+                "أريد عسل للطاقة",
+                "ما هو أفضل عسل؟",
+                "عسل هدية فاخرة"
+            ]);
+        };
+
+        // Send Message
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addUserMessage(text);
+            input.value = '';
+
+            // Show typing
+            showTyping();
+
+            // Process after delay
+            setTimeout(() => {
+                removeTyping();
+                processMessage(text);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        // Process User Message
+        function processMessage(text) {
+            const lowerText = text.toLowerCase();
+            let foundProducts = [];
+
+            // Search keywords
+            for (const [keyword, productKeys] of Object.entries(keywords)) {
+                if (lowerText.includes(keyword)) {
+                    foundProducts.push(...productKeys);
+                }
+            }
+
+            // Search product names
+            for (const key of Object.keys(products)) {
+                if (lowerText.includes(key)) {
+                    foundProducts.push(key);
+                }
+            }
+
+            // Remove duplicates
+            foundProducts = [...new Set(foundProducts)];
+
+            if (foundProducts.length > 0) {
+                const recommendations = foundProducts.slice(0, 3).map(key => products[key]);
+                let response = `🎯 بناءً على طلبك، أنصحك بـ:\n\n`;
+
+                recommendations.forEach((p, i) => {
+                    response += `${i + 1}. **${p.name}** - ${p.price} ريال\n`;
+                    response += `   ✨ ${p.benefits}\n\n`;
+                });
+
+                addBotMessage(response, [], recommendations);
+            } else if (lowerText.includes('سعر') || lowerText.includes('كم')) {
+                addBotMessage(`💰 نطاق أسعارنا:
+
+• اقتصادي: 140-170 ريال
+• متوسط: 180-250 ريال  
+• فاخر: 300-450 ريال
+
+أي فئة سعرية تناسبك؟`, ["اقتصادي", "متوسط", "فاخر"]);
+            } else if (lowerText.includes('افضل') || lowerText.includes('أفضل')) {
+                const topProducts = [products.سدر, products.مانوكا, products.ملكي];
+                addBotMessage(`⭐ أفضل 3 منتجات لدينا:`, [], topProducts);
+            } else if (lowerText.includes('شكر')) {
+                addBotMessage(`عفواً! سعيد بمساعدتك 😊
+                
+هل تريد شيء آخر؟`, ["نعم، أريد المزيد", "لا، شكراً"]);
+            } else {
+                addBotMessage(`🤔 لم أفهم طلبك تماماً. يمكنك سؤالي عن:
+
+• عسل لمشكلة صحية (سعال، برد، مناعة...)
+• عسل لغرض معين (طاقة، رياضة، هدية...)
+• مقارنة الأسعار
+• أفضل المنتجات`, [
+                    "عسل للسعال",
+                    "عسل للطاقة",
+                    "أفضل عسل",
+                    "أرخص عسل"
+                ]);
+            }
+        }
+
+        // Add Bot Message
+        function addBotMessage(text, quickReplies = [], products = []) {
+            const container = document.getElementById('chatMessages');
+
+            let html = `
+                <div class="message bot">
+                    <div class="name"><i class="fas fa-robot"></i> مساعد العسل</div>
+                    <div>${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+            `;
+
+            if (products.length > 0) {
+                html += `<div class="product-suggestions">`;
+                products.forEach(p => {
+                    html += `
+                        <div class="mini-product" onclick="addToCart('${p.name}')">
+                            <div class="name">🍯 ${p.name}</div>
+                            <div class="price">${p.price} ريال</div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            if (quickReplies.length > 0) {
+                html += `<div class="quick-replies">`;
+                quickReplies.forEach(reply => {
+                    html += `<span class="quick-reply" onclick="quickReply('${reply}')">${reply}</span>`;
+                });
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML += html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Add User Message
+        function addUserMessage(text) {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML += `
+                <div class="message user">
+                    <div class="name"><i class="fas fa-user"></i> أنت</div>
+                    <div>${text}</div>
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Quick Reply
+        function quickReply(text) {
+            document.getElementById('userInput').value = text;
+            sendMessage();
+        }
+
+        // Show/Remove Typing
+        function showTyping() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML += `
+                <div class="message bot" id="typingIndicator">
+                    <div class="typing">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        // Add to Cart
+        function addToCart(name) {
+            addBotMessage(`✅ تم إضافة "${name}" للسلة!
+
+هل تريد إكمال الشراء أو إضافة منتجات أخرى؟`, ["إكمال الشراء", "إضافة منتج آخر"]);
+        }
+
+        // Voice Input
+        let isRecording = false;
+        function toggleVoice() {
+            const btn = document.getElementById('voiceBtn');
+            if (!isRecording) {
+                btn.classList.add('recording');
+                btn.innerHTML = '<i class="fas fa-stop"></i>';
+                isRecording = true;
+                // In real app: start speech recognition
+            } else {
+                btn.classList.remove('recording');
+                btn.innerHTML = '<i class="fas fa-microphone"></i>';
+                isRecording = false;
+            }
+        }
+
+        // Handle Enter Key
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+    </script>
+</body>
+
+</html>

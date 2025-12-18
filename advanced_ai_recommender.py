@@ -172,6 +172,10 @@ class AdvancedAIRecommender:
             # Calculate multi-factor score
             score = self._calculate_advanced_score(user_id, content, context)
             
+            # FILTER: Skip low relevance items (< 10% after scaling)
+            if score < 0.10:  # Adjusted for new scale
+                continue
+            
             scored.append({
                 **content,
                 'score': score,
@@ -206,11 +210,15 @@ class AdvancedAIRecommender:
         # Boost if user interests match content category/tags
         interest_match = self._calculate_interest_match(user_id, content)
         
+        # If interest match is negative (irrelevant), return very low score
+        if interest_match < 0:
+            return 0.01  # Nearly zero - filter out irrelevant items
+        
         # Combined base score with better weights
         base_score = (
-            cb_score * 0.50 +          # Content similarity is KEY
-            cf_score * 0.30 +          # Collaborative second
-            interest_match * 0.15 +    # Direct interest match
+            interest_match * 0.40 +    # Interest match MOST important!
+            cb_score * 0.35 +          # Content similarity second
+            cf_score * 0.20 +          # Collaborative third
             trend_score * 0.05         # Trending bonus
         )
         
@@ -226,26 +234,47 @@ class AdvancedAIRecommender:
         # Final score - normalize better
         final_score = base_score * time_factor * context_boost
         
-        # Scale up to make scores more visible (0-1 range)
-        final_score = min(max(final_score * 1.5, 0), 1.0)
+        # Scale UP to make scores more visible and higher
+        # Top matches should be 50-90%, not 20-30%
+        final_score = min(max(final_score * 3.0, 0), 1.0)  # 3x boost!
         
         return final_score
     
     def _calculate_interest_match(self, user_id: str, content: Dict) -> float:
-        """حساب مدى تطابق الاهتمامات مباشرة"""
+        """
+        حساب مدى تطابق الاهتمامات - محسّن
+        
+        استراتيجية:
+        - Jaccard Similarity: للـ tags فقط (خصائص المنتجات)
+        - TF-IDF + Cosine: للنصوص (أوصاف المنتجات)
+        """
         user = self.users[user_id]
         user_interests = set(user['interests'])
-        
-        # Check category match
-        category_match = 0.5 if content['category'].lower() in user_interests else 0.0
-        
-        # Check tags match
         content_tags = set(content['tags'])
-        matching_tags = user_interests & content_tags
         
-        tag_match = len(matching_tags) / len(user_interests) if user_interests else 0.0
+        # 1. Jaccard Similarity للـ Tags فقط
+        # صيغة Jaccard: |A ∩ B| / |A ∪ B|
+        intersection = user_interests & content_tags
+        union = user_interests | content_tags
+        jaccard_score = len(intersection) / len(union) if union else 0.0
         
-        return (category_match + tag_match) / 2
+        # 2. Category boost (إذا الفئة في الاهتمامات)
+        category_lower = content['category'].lower()
+        category_match = 0.0
+        for interest in user_interests:
+            if interest in category_lower or category_lower in interest:
+                category_match = 1.0
+                break
+        
+        # Weighted combination
+        # Jaccard أهم للـ tags، Category boost إضافي
+        combined = (jaccard_score * 0.75) + (category_match * 0.25)
+        
+        # Small penalty if NO match at all (but still allow it)
+        if combined == 0.0:
+            return 0.05  # Low score but not blocked
+        
+        return combined
     
     # ============= Collaborative Filtering =============
     
@@ -304,7 +333,14 @@ class AdvancedAIRecommender:
     # ============= Content-Based Filtering =============
     
     def _content_based_score(self, user_id: str, content: Dict) -> float:
-        """Content-Based Filtering بـ TF-IDF"""
+        """
+        Content-Based Filtering بـ TF-IDF + Cosine Similarity
+        
+        هاد الدالة تستعمل للنصوص والأوصاف:
+        - TF (Term Frequency): كم مرة كل كلمة تظهر
+        - IDF (Inverse Document Frequency): أهمية الكلمة (الكلمات النادرة أهم)
+        - Cosine Similarity: التشابه بين vectors
+        """
         
         user_profile = self.user_profiles.get(user_id, {})
         content_vector = self.content_vectors.get(content['id'], {})
@@ -316,13 +352,20 @@ class AdvancedAIRecommender:
         return self._cosine_similarity(user_profile, content_vector)
     
     def _build_content_vector(self, content: Dict):
-        """بناء TF-IDF vector للمحتوى"""
-        # Combine all text
+        """
+        بناء TF-IDF vector للمحتوى
+        
+        النصوص فقط (description) - Tags تُعالج بـ Jaccard
+        """
+        # Text features only (not tags - those use Jaccard)
         text_features = (
-            content['tags'] + 
             [content['category'].lower()] +
             content['description'].split()
         )
+        
+        if not text_features:
+            self.content_vectors[content['id']] = {}
+            return
         
         # Calculate TF
         tf = Counter(text_features)
@@ -331,32 +374,50 @@ class AdvancedAIRecommender:
         # TF normalization
         vector = {}
         for term, count in tf.items():
-            vector[term] = count / total_terms if total_terms > 0 else 0
+            # TF = count / total
+            tf_score = count / total_terms if total_terms > 0 else 0
+            
+            # IDF approximation (could be improved with full corpus)
+            # For now: log(total_content / content_with_term)
+            docs_with_term = sum(1 for c in self.content if term in c.get('description', '').lower())
+            idf = math.log((len(self.content) + 1) / (docs_with_term + 1)) + 1
+            
+            vector[term] = tf_score * idf
         
         self.content_vectors[content['id']] = vector
     
     def _build_user_profile(self, user_id: str):
-        """بناء TF-IDF profile للمستخدم"""
+        """
+        بناء TF-IDF profile للمستخدم
+        
+        يجمع:
+        - الاهتمامات (interests)
+        - أوصاف المحتوى اللي شافو (descriptions)
+        """
         user = self.users[user_id]
         
-        # Combine interests + viewed content features
+        # Start with interests
         all_features = user['interests'].copy()
         
-        # Add features from viewed content
+        # Add description words from viewed content (not tags)
         for content_id in user['viewed']:
             content = self._get_content(content_id)
             if content:
-                all_features.extend(content['tags'])
                 all_features.append(content['category'].lower())
+                all_features.extend(content['description'].split())
         
-        # Build TF vector
+        # Build TF-IDF vector
         if all_features:
             tf = Counter(all_features)
             total = len(all_features)
             
             profile = {}
             for term, count in tf.items():
-                profile[term] = count / total
+                tf_score = count / total
+                # Simple IDF approximation
+                docs_with_term = sum(1 for c in self.content if term in c.get('description', '').lower())
+                idf = math.log((len(self.content) + 1) / (docs_with_term + 1)) + 1
+                profile[term] = tf_score * idf
             
             self.user_profiles[user_id] = profile
     
