@@ -7,7 +7,8 @@ import { DashboardLayout } from "@/components/dashboard";
 import { http, getFullImageUrl } from "@/lib/http";
 import {
     ArrowLeft, Save, Package, Loader2, Trash2,
-    ChevronDown, ChevronUp, Image as ImageIcon, Tag, Layers
+    ChevronDown, ChevronUp, Image as ImageIcon, Tag, Layers,
+    Plus, Edit2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -26,6 +27,7 @@ type Variant = {
     status: string;
     weight?: string;
     weight_unit?: string;
+    image_url?: string;
 };
 
 type ProductData = {
@@ -190,20 +192,20 @@ export default function EditProductPage() {
 
             const productData = {
                 name: name.trim(),
-                sku: sku.trim(),
-                description: description.trim(),
-                short_description: shortDescription.trim(),
-                regular_price: regularPrice,
-                sale_price: salePrice,
-                stock: parseInt(stock) || 0,
+                sku: sku ? sku.trim() : "",  // Ensure SKU is always a string
+                description: description ? description.trim() : "",
+                short_description: shortDescription ? shortDescription.trim() : "",
+                regular_price: regularPrice || "",
+                sale_price: salePrice || "",
+                stock: stock ? parseInt(stock) : 0,
                 status,
-                image_url: imageUrl,
-                weight,
-                weight_unit: weightUnit,
-                length,
-                width,
-                height,
-                dimension_unit: dimensionUnit,
+                image_url: imageUrl || "",
+                weight: weight || "",
+                weight_unit: weightUnit || "kg",
+                length: length || "",
+                width: width || "",
+                height: height || "",
+                dimension_unit: dimensionUnit || "cm",
                 categories: selectedCategories,
             };
 
@@ -391,47 +393,51 @@ export default function EditProductPage() {
                         </div>
                     </Section>
 
-                    {/* Pricing */}
-                    <Section title="Pricing" icon={<Tag className="h-5 w-5" />}>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-300 mb-2">Regular Price</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={regularPrice}
-                                    onChange={(e) => setRegularPrice(e.target.value)}
-                                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                                    placeholder="0.00"
-                                />
+                    {/* Pricing - Hide for variable products */}
+                    {productType !== "variable" && (
+                        <Section title="Pricing" icon={<Tag className="h-5 w-5" />}>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-300 mb-2">Regular Price</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={regularPrice}
+                                        onChange={(e) => setRegularPrice(e.target.value)}
+                                        className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-300 mb-2">Sale Price</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={salePrice}
+                                        onChange={(e) => setSalePrice(e.target.value)}
+                                        className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-300 mb-2">Sale Price</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={salePrice}
-                                    onChange={(e) => setSalePrice(e.target.value)}
-                                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                                    placeholder="0.00"
-                                />
-                            </div>
-                        </div>
-                    </Section>
+                        </Section>
+                    )}
 
-                    {/* Inventory */}
-                    <Section title="Inventory" icon={<Package className="h-5 w-5" />}>
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-300 mb-2">Stock Quantity</label>
-                            <input
-                                type="number"
-                                value={stock}
-                                onChange={(e) => setStock(e.target.value)}
-                                className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                                placeholder="0"
-                            />
-                        </div>
-                    </Section>
+                    {/* Inventory - Hide for variable products */}
+                    {productType !== "variable" && (
+                        <Section title="Inventory" icon={<Package className="h-5 w-5" />}>
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">Stock Quantity</label>
+                                <input
+                                    type="number"
+                                    value={stock}
+                                    onChange={(e) => setStock(e.target.value)}
+                                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                    placeholder="0"
+                                />
+                            </div>
+                        </Section>
+                    )}
 
                     {/* Categories */}
                     <Section title="Categories" icon={<Tag className="h-5 w-5" />}>
@@ -474,89 +480,216 @@ export default function EditProductPage() {
                         </div>
                     </Section>
 
-                    {/* Variants (for variable products) */}
-                    {productType === "variable" && variants.length > 0 && (
-                        <Section title={`Variants (${variants.length})`} icon={<Layers className="h-5 w-5" />}>
-                            <div className="space-y-4">
-                                <p className="text-sm text-neutral-400">Manage product variants:</p>
-                                
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-neutral-700">
-                                                <th className="text-left py-2 px-3 text-neutral-400 font-medium">Variant</th>
-                                                <th className="text-left py-2 px-3 text-neutral-400 font-medium">SKU</th>
-                                                <th className="text-left py-2 px-3 text-neutral-400 font-medium">Price</th>
-                                                <th className="text-left py-2 px-3 text-neutral-400 font-medium">Stock</th>
-                                                <th className="text-left py-2 px-3 text-neutral-400 font-medium">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {variants.map((variant, index) => (
-                                                <tr key={variant.id} className="border-b border-neutral-800 hover:bg-neutral-800/30">
-                                                    <td className="py-3 px-3">
-                                                        <div>
-                                                            <p className="text-neutral-200 font-medium">{variant.name || `Variant ${index + 1}`}</p>
-                                                            {variant.options && (
-                                                                <p className="text-xs text-neutral-500">
-                                                                    {Object.entries(variant.options).map(([key, value]) => `${key}: ${value}`).join(", ")}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-3 px-3">
-                                                        <input
-                                                            type="text"
-                                                            value={variant.sku}
-                                                            onChange={(e) => {
-                                                                const updated = [...variants];
-                                                                updated[index] = { ...updated[index], sku: e.target.value };
-                                                                setVariants(updated);
-                                                            }}
-                                                            className="w-24 px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-neutral-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                                        />
-                                                    </td>
-                                                    <td className="py-3 px-3">
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            value={variant.price}
-                                                            onChange={(e) => {
-                                                                const updated = [...variants];
-                                                                updated[index] = { ...updated[index], price: e.target.value };
-                                                                setVariants(updated);
-                                                            }}
-                                                            className="w-20 px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-neutral-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                                        />
-                                                    </td>
-                                                    <td className="py-3 px-3">
-                                                        <input
-                                                            type="number"
-                                                            value={variant.stock}
-                                                            onChange={(e) => {
-                                                                const updated = [...variants];
-                                                                updated[index] = { ...updated[index], stock: parseInt(e.target.value) || 0 };
-                                                                setVariants(updated);
-                                                            }}
-                                                            className="w-16 px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-neutral-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                                        />
-                                                    </td>
-                                                    <td className="py-3 px-3">
-                                                        <span className={`px-2 py-1 text-xs rounded-full ${
-                                                            variant.status === "active" 
-                                                                ? "bg-emerald-500/20 text-emerald-400"
-                                                                : "bg-neutral-700 text-neutral-400"
-                                                        }`}>
-                                                            {variant.status}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                    {/* Variants (for variable products) - Premium Design */}
+                    {productType === "variable" && (
+                        <div className="bg-gradient-to-br from-neutral-900 to-neutral-900/50 border border-neutral-800 rounded-2xl overflow-hidden">
+                            {/* Header */}
+                            <div className="p-5 border-b border-neutral-800 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                                        <Layers className="h-5 w-5 text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-white">المتغيرات</h3>
+                                        <p className="text-sm text-neutral-400">{variants.length} متغير</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-xl transition-all hover:scale-105"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    إضافة متغير
+                                </button>
+                            </div>
+
+                            {/* Stats Bar */}
+                            <div className="px-5 py-3 bg-neutral-800/30 border-b border-neutral-800 flex items-center gap-6 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Package className="h-4 w-4 text-emerald-400" />
+                                    <span className="text-neutral-400">إجمالي المخزون:</span>
+                                    <span className="text-emerald-400 font-semibold">
+                                        {variants.reduce((sum, v) => sum + (parseInt(String(v.stock)) || 0), 0)} قطعة
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Tag className="h-4 w-4 text-amber-400" />
+                                    <span className="text-neutral-400">نطاق السعر:</span>
+                                    <span className="text-amber-400 font-semibold">
+                                        {variants.length > 0 ? (
+                                            <>
+                                                {Math.min(...variants.map(v => parseFloat(v.price) || 0)).toFixed(2)} - {Math.max(...variants.map(v => parseFloat(v.price) || 0)).toFixed(2)} درهم
+                                            </>
+                                        ) : '0.00 درهم'}
+                                    </span>
                                 </div>
                             </div>
-                        </Section>
+
+                            {/* Variants List */}
+                            {variants.length > 0 ? (
+                                <div className="divide-y divide-neutral-800">
+                                    {variants.map((variant, index) => (
+                                        <div key={variant.id} className="p-5 hover:bg-neutral-800/30 transition-colors">
+                                            <div className="flex items-start gap-4">
+                                                {/* Checkbox + Editable Image */}
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-5 h-5 rounded border-neutral-600 bg-neutral-800 text-emerald-500 focus:ring-emerald-500/50"
+                                                    />
+                                                    <div className="relative group">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            id={`variant-image-${variant.id}`}
+                                                            className="hidden"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (event) => {
+                                                                        const updated = [...variants];
+                                                                        updated[index] = { ...updated[index], image_url: event.target?.result as string };
+                                                                        setVariants(updated);
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                }
+                                                            }}
+                                                        />
+                                                        <label
+                                                            htmlFor={`variant-image-${variant.id}`}
+                                                            className="block w-16 h-16 bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-xl overflow-hidden flex-shrink-0 shadow-lg cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all"
+                                                        >
+                                                            {variant.image_url ? (
+                                                                <img src={getFullImageUrl(variant.image_url)} alt={variant.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <ImageIcon className="h-6 w-6 text-neutral-500" />
+                                                                </div>
+                                                            )}
+                                                            {/* Hover overlay */}
+                                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
+                                                                <Plus className="h-6 w-6 text-white" />
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                {/* Variant Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <h4 className="font-semibold text-white text-lg">
+                                                            {variant.name || `متغير ${index + 1}`}
+                                                        </h4>
+                                                        <span className={`px-2 py-0.5 text-xs rounded-full ${variant.status === "active"
+                                                            ? "bg-emerald-500/20 text-emerald-400"
+                                                            : "bg-neutral-700 text-neutral-400"
+                                                            }`}>
+                                                            {variant.status === "active" ? "نشط" : "مخفي"}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Editable Fields */}
+                                                    <div className="grid grid-cols-4 gap-4">
+                                                        <div>
+                                                            <label className="block text-xs text-neutral-500 mb-1">SKU</label>
+                                                            <input
+                                                                type="text"
+                                                                value={variant.sku || ''}
+                                                                onChange={(e) => {
+                                                                    const updated = [...variants];
+                                                                    updated[index] = { ...updated[index], sku: e.target.value };
+                                                                    setVariants(updated);
+                                                                }}
+                                                                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                                                placeholder="SKU-001"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-neutral-500 mb-1">السعر (درهم)</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                value={variant.price || ''}
+                                                                onChange={(e) => {
+                                                                    const updated = [...variants];
+                                                                    updated[index] = { ...updated[index], price: e.target.value };
+                                                                    setVariants(updated);
+                                                                }}
+                                                                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                                                placeholder="0.00"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-neutral-500 mb-1">المخزون</label>
+                                                            <input
+                                                                type="number"
+                                                                value={variant.stock || 0}
+                                                                onChange={(e) => {
+                                                                    const updated = [...variants];
+                                                                    updated[index] = { ...updated[index], stock: parseInt(e.target.value) || 0 };
+                                                                    setVariants(updated);
+                                                                }}
+                                                                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-neutral-500 mb-1">الحالة</label>
+                                                            <select
+                                                                value={variant.status || 'active'}
+                                                                onChange={(e) => {
+                                                                    const updated = [...variants];
+                                                                    updated[index] = { ...updated[index], status: e.target.value };
+                                                                    setVariants(updated);
+                                                                }}
+                                                                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                                            >
+                                                                <option value="active">نشط</option>
+                                                                <option value="inactive">مخفي</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Actions */}
+                                                <div className="flex flex-col gap-2">
+                                                    <button
+                                                        type="button"
+                                                        className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-lg transition-all"
+                                                        title="تعديل"
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                        title="حذف"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-12 text-center">
+                                    <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Layers className="h-8 w-8 text-neutral-600" />
+                                    </div>
+                                    <h4 className="text-neutral-300 font-medium mb-2">لا توجد متغيرات</h4>
+                                    <p className="text-neutral-500 text-sm mb-4">أضف متغيرات مثل الحجم واللون</p>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        إضافة أول متغير
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* Image */}
