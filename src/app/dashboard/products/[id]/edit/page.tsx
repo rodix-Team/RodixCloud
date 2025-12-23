@@ -8,9 +8,30 @@ import { http, getFullImageUrl } from "@/lib/http";
 import {
     ArrowLeft, Save, Package, Loader2, Trash2,
     ChevronDown, ChevronUp, Image as ImageIcon, Tag, Layers,
-    Plus, Edit2
+    Plus, Edit2, Upload
 } from "lucide-react";
 import Link from "next/link";
+
+// Helper function to upload variant image to server
+async function uploadVariantImage(file: File): Promise<string | null> {
+    try {
+        const formData = new FormData();
+        formData.append("images[]", file);
+        formData.append("folder", "variants");
+
+        const response = await http.post("/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        if (response.data?.data?.[0]?.url) {
+            return getFullImageUrl(response.data.data[0].url);
+        }
+        return null;
+    } catch (error) {
+        console.error("❌ Failed to upload image:", error);
+        return null;
+    }
+}
 
 type Category = {
     id: number;
@@ -28,6 +49,7 @@ type Variant = {
     weight?: string;
     weight_unit?: string;
     image_url?: string;
+    images?: string[]; // مصفوفة الصور (حتى 3 صور)
 };
 
 type ProductData = {
@@ -96,6 +118,7 @@ export default function EditProductPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
@@ -152,6 +175,18 @@ export default function EditProductPage() {
                 setSelectedCategories((data.categories || []).map((c: Category) => c.id));
                 // Product type and variants
                 setProductType(data.type || "simple");
+                console.log("📦 Product data:", data);
+                console.log("📦 Variants from API:", data.variants);
+                if (data.variants) {
+                    data.variants.forEach((v: Variant, i: number) => {
+                        console.log(`📦 Variant ${i + 1}:`, {
+                            id: v.id,
+                            name: v.name,
+                            image_url: v.image_url,
+                            images: v.images,
+                        });
+                    });
+                }
                 setVariants(data.variants || []);
             } catch (err: any) {
                 console.error("Failed to fetch product:", err);
@@ -190,9 +225,24 @@ export default function EditProductPage() {
             setError("");
             setSuccess("");
 
+            // Prepare variants data for API (if variable product)
+            // Filter out Base64 images (too large) - only send URLs
+            const variantsData = productType === "variable" ? variants.map(v => ({
+                id: v.id,
+                sku: String(v.sku || ""), // Ensure SKU is always a string
+                price: String(v.price || "0"),
+                stock: Number(v.stock) || 0,
+                status: v.status || "active",
+                name: v.name || "",
+                options: v.options || {},
+                // Only send URL images, not Base64 (Base64 is too large for API)
+                images: (v.images || []).filter(img => img && !img.startsWith("data:")),
+            })) : undefined;
+
             const productData = {
                 name: name.trim(),
-                sku: sku ? sku.trim() : "",  // Ensure SKU is always a string
+                // Generate SKU if empty (backend requires it)
+                sku: sku ? sku.trim() : `SKU-${productId}`,
                 description: description ? description.trim() : "",
                 short_description: shortDescription ? shortDescription.trim() : "",
                 regular_price: regularPrice || "",
@@ -207,10 +257,19 @@ export default function EditProductPage() {
                 height: height || "",
                 dimension_unit: dimensionUnit || "cm",
                 categories: selectedCategories,
+                type: productType,
+                // Re-enabled variants
+                ...(variantsData && { variants: variantsData }),
             };
 
+            console.log("📤 Sending product data:", productData);
+            console.log("📤 SKU value:", productData.sku, "Type:", typeof productData.sku);
+            if (variantsData) {
+                console.log("📤 Variants:", variantsData);
+                variantsData.forEach((v, i) => console.log(`📤 Variant ${i} SKU:`, v.sku, "Type:", typeof v.sku));
+            }
             await http.put(`/products/${productId}`, productData);
-            setSuccess("Product updated successfully!");
+            setSuccess("تم تحديث المنتج بنجاح!");
 
             setTimeout(() => setSuccess(""), 3000);
         } catch (err: any) {
@@ -221,19 +280,26 @@ export default function EditProductPage() {
         }
     };
 
-    // Handle delete
-    const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
-            return;
-        }
+    // Open delete confirmation modal
+    const handleDelete = () => {
+        console.log("🗑️ Opening delete confirmation modal");
+        setShowDeleteModal(true);
+    };
 
+    // Actually execute the delete
+    const executeDelete = async () => {
+        console.log("🗑️ Executing delete for product:", productId);
+        setShowDeleteModal(false);
         try {
             setDeleting(true);
+            console.log("🗑️ Sending delete request...");
             await http.delete(`/products/${productId}`);
+            console.log("🗑️ Product deleted successfully!");
             router.push("/dashboard/products");
         } catch (err: any) {
-            console.error("Failed to delete product:", err);
-            setError(err.response?.data?.message || "Failed to delete product");
+            console.error("❌ Failed to delete product:", err);
+            console.error("❌ Error details:", err.response?.data);
+            setError(err.response?.data?.message || "فشل في حذف المنتج");
         } finally {
             setDeleting(false);
         }
@@ -246,6 +312,72 @@ export default function EditProductPage() {
                 ? prev.filter(id => id !== categoryId)
                 : [...prev, categoryId]
         );
+    };
+
+    // Add new variant
+    const addVariant = async () => {
+        try {
+            const newVariantData = {
+                sku: `VAR-${Date.now().toString().slice(-6)}`,
+                price: 0,
+                stock: 0,
+                options: {},
+                name: `متغير ${variants.length + 1}`,
+                status: 'active',
+                images: []
+            };
+
+            // Save to backend immediately
+            const response = await http.post(`/products/${productId}/variants`, newVariantData);
+            console.log('📦 Add variant response:', response.data);
+
+            // Backend returns: { message, variant, variants }
+            const savedVariant = response.data.variant;
+
+            if (savedVariant && savedVariant.id) {
+                setVariants(prev => [...prev, savedVariant]);
+                setSuccess('تمت إضافة متغير جديد وحفظه');
+                setTimeout(() => setSuccess(''), 2000);
+            } else {
+                // If response format is different, reload variants
+                console.warn('Unexpected response format, reloading...');
+                const productResponse = await http.get(`/products/${productId}`);
+                const productData = productResponse.data.data || productResponse.data;
+                setVariants(productData.variants || []);
+                setSuccess('تمت إضافة المتغير');
+            }
+        } catch (err: any) {
+            console.error('Failed to add variant:', err);
+            setError(err.response?.data?.message || 'فشل في إضافة المتغير');
+            setTimeout(() => setError(''), 3000);
+        }
+    };
+
+    // Delete variant
+    const deleteVariant = async (variantId: number, index: number) => {
+        console.log('🗑️ Delete variant clicked:', { variantId, index });
+
+        // TEMP: Skip confirm for testing
+        // const confirmed = window.confirm('هل أنت متأكد من حذف هذا المتغير؟');
+        // console.log('🗑️ User confirmed:', confirmed);
+        // if (!confirmed) return;
+
+        try {
+            console.log('🗑️ Deleting from backend...');
+            // Delete from backend using correct route
+            await http.delete(`/products/${productId}/variants/${variantId}`);
+            console.log('🗑️ Backend delete successful');
+
+            // Remove from local state
+            setVariants(prev => prev.filter((_, i) => i !== index));
+            setSuccess('تم حذف المتغير بنجاح');
+            setTimeout(() => setSuccess(''), 2000);
+        } catch (err: any) {
+            console.error('🗑️ Failed to delete variant:', err);
+            console.error('🗑️ Error response:', err.response?.data);
+            setError(err.response?.data?.message || 'فشل في حذف المتغير');
+            setTimeout(() => setError(''), 3000);
+        }
     };
 
     if (loading) {
@@ -295,6 +427,19 @@ export default function EditProductPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            {/* Preview Button */}
+                            <a
+                                href={`/products/${productId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-4 py-2.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm font-medium rounded-lg transition-colors"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Preview
+                            </a>
                             <button
                                 type="button"
                                 onClick={handleDelete}
@@ -344,7 +489,7 @@ export default function EditProductPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-300 mb-2">SKU</label>
                                     <input
@@ -354,6 +499,34 @@ export default function EditProductPage() {
                                         className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                                         placeholder="SKU-001"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-300 mb-2">نوع المنتج</label>
+                                    <select
+                                        value={productType}
+                                        onChange={(e) => {
+                                            const newType = e.target.value;
+                                            if (newType === 'variable' && productType === 'simple') {
+                                                // Converting from simple to variable
+                                                if (variants.length === 0) {
+                                                    setSuccess('تم تحويل المنتج إلى متغير. أضف متغيرات الآن.');
+                                                }
+                                            } else if (newType === 'simple' && productType === 'variable') {
+                                                // Converting from variable to simple
+                                                if (variants.length > 0 && !confirm('سيتم حذف جميع المتغيرات. هل تريد المتابعة؟')) {
+                                                    return;
+                                                }
+                                                setVariants([]);
+                                                setSuccess('تم تحويل المنتج إلى بسيط.');
+                                            }
+                                            setProductType(newType);
+                                            setTimeout(() => setSuccess(''), 3000);
+                                        }}
+                                        className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    >
+                                        <option value="simple">🎯 منتج بسيط</option>
+                                        <option value="variable">🎨 منتج متغير</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-300 mb-2">Status</label>
@@ -496,6 +669,7 @@ export default function EditProductPage() {
                                 </div>
                                 <button
                                     type="button"
+                                    onClick={addVariant}
                                     className="flex items-center gap-2 px-4 py-2.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-xl transition-all hover:scale-105"
                                 >
                                     <Plus className="h-4 w-4" />
@@ -531,47 +705,112 @@ export default function EditProductPage() {
                                     {variants.map((variant, index) => (
                                         <div key={variant.id} className="p-5 hover:bg-neutral-800/30 transition-colors">
                                             <div className="flex items-start gap-4">
-                                                {/* Checkbox + Editable Image */}
+                                                {/* Checkbox + 3 Editable Images */}
                                                 <div className="flex items-center gap-3">
                                                     <input
                                                         type="checkbox"
                                                         className="w-5 h-5 rounded border-neutral-600 bg-neutral-800 text-emerald-500 focus:ring-emerald-500/50"
                                                     />
-                                                    <div className="relative group">
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            id={`variant-image-${variant.id}`}
-                                                            className="hidden"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    const reader = new FileReader();
-                                                                    reader.onload = (event) => {
-                                                                        const updated = [...variants];
-                                                                        updated[index] = { ...updated[index], image_url: event.target?.result as string };
-                                                                        setVariants(updated);
-                                                                    };
-                                                                    reader.readAsDataURL(file);
-                                                                }
-                                                            }}
-                                                        />
-                                                        <label
-                                                            htmlFor={`variant-image-${variant.id}`}
-                                                            className="block w-16 h-16 bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-xl overflow-hidden flex-shrink-0 shadow-lg cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all"
-                                                        >
-                                                            {variant.image_url ? (
-                                                                <img src={getFullImageUrl(variant.image_url)} alt={variant.name} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <ImageIcon className="h-6 w-6 text-neutral-500" />
+                                                    <div className="flex gap-2">
+                                                        {[0, 1, 2].map((imgIndex) => {
+                                                            const images = variant.images || [];
+                                                            const currentImage = images[imgIndex];
+                                                            const isMainImage = imgIndex === 0;
+
+                                                            // Debug: Log image data on first render
+                                                            if (imgIndex === 0) {
+                                                                console.log(`🖼️ Variant ${variant.id} images:`, images, 'type:', typeof images);
+                                                            }
+
+                                                            return (
+                                                                <div key={imgIndex} className="relative group">
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        id={`variant-image-${variant.id}-${imgIndex}`}
+                                                                        className="hidden"
+                                                                        onChange={async (e) => {
+                                                                            const file = e.target.files?.[0];
+                                                                            if (file) {
+                                                                                // Capture current index in closure
+                                                                                const variantIndex = index;
+                                                                                const imageSlotIndex = imgIndex;
+
+                                                                                // Show loading state
+                                                                                setVariants(prev => {
+                                                                                    const updated = [...prev];
+                                                                                    const newImages = [...(updated[variantIndex].images || [])];
+                                                                                    while (newImages.length <= imageSlotIndex) {
+                                                                                        newImages.push('');
+                                                                                    }
+                                                                                    newImages[imageSlotIndex] = 'uploading...';
+                                                                                    updated[variantIndex] = { ...updated[variantIndex], images: newImages };
+                                                                                    return updated;
+                                                                                });
+
+                                                                                // Upload to server
+                                                                                const uploadedUrl = await uploadVariantImage(file);
+
+                                                                                // Update with actual URL using callback to get fresh state
+                                                                                setVariants(prev => {
+                                                                                    const finalUpdated = [...prev];
+                                                                                    const finalImages = [...(finalUpdated[variantIndex].images || [])];
+                                                                                    while (finalImages.length <= imageSlotIndex) {
+                                                                                        finalImages.push('');
+                                                                                    }
+                                                                                    finalImages[imageSlotIndex] = uploadedUrl || '';
+                                                                                    finalUpdated[variantIndex] = {
+                                                                                        ...finalUpdated[variantIndex],
+                                                                                        images: finalImages.filter(img => img && img !== 'uploading...'),
+                                                                                        image_url: finalImages[0] || ''
+                                                                                    };
+                                                                                    return finalUpdated;
+                                                                                });
+
+                                                                                if (!uploadedUrl) {
+                                                                                    console.error("❌ Image upload failed");
+                                                                                } else {
+                                                                                    console.log("✅ Image uploaded:", uploadedUrl);
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <label
+                                                                        htmlFor={`variant-image-${variant.id}-${imgIndex}`}
+                                                                        className={`block ${isMainImage ? 'w-16 h-16' : 'w-12 h-12'} bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-xl overflow-hidden flex-shrink-0 shadow-lg cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all relative`}
+                                                                    >
+                                                                        {currentImage === 'uploading...' ? (
+                                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                                <Upload className={`${isMainImage ? 'h-6 w-6' : 'h-4 w-4'} text-emerald-400 animate-pulse`} />
+                                                                            </div>
+                                                                        ) : currentImage && currentImage.startsWith('http') ? (
+                                                                            <img
+                                                                                src={currentImage}
+                                                                                alt={`${variant.name || 'متغير'} - صورة ${imgIndex + 1}`}
+                                                                                className="w-full h-full object-cover"
+                                                                                onError={(e) => {
+                                                                                    console.log("❌ Image load error for:", currentImage);
+                                                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                                                }}
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                                <ImageIcon className={`${isMainImage ? 'h-6 w-6' : 'h-4 w-4'} text-neutral-500`} />
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Hover overlay */}
+                                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
+                                                                            <Plus className={`${isMainImage ? 'h-5 w-5' : 'h-4 w-4'} text-white`} />
+                                                                        </div>
+                                                                    </label>
+                                                                    {isMainImage && (
+                                                                        <span className="absolute -bottom-1 -right-1 text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-medium">
+                                                                            رئيسية
+                                                                        </span>
+                                                                    )}
                                                                 </div>
-                                                            )}
-                                                            {/* Hover overlay */}
-                                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
-                                                                <Plus className="h-6 w-6 text-white" />
-                                                            </div>
-                                                        </label>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
 
@@ -663,6 +902,7 @@ export default function EditProductPage() {
                                                     </button>
                                                     <button
                                                         type="button"
+                                                        onClick={() => deleteVariant(variant.id, index)}
                                                         className="p-2 text-neutral-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                                                         title="حذف"
                                                     >
@@ -682,6 +922,7 @@ export default function EditProductPage() {
                                     <p className="text-neutral-500 text-sm mb-4">أضف متغيرات مثل الحجم واللون</p>
                                     <button
                                         type="button"
+                                        onClick={addVariant}
                                         className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors"
                                     >
                                         <Plus className="h-4 w-4" />
@@ -784,6 +1025,40 @@ export default function EditProductPage() {
                         </div>
                     </Section>
                 </form>
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                        <div className="bg-neutral-900 border border-neutral-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-3 bg-red-500/20 rounded-full">
+                                    <Trash2 className="h-6 w-6 text-red-400" />
+                                </div>
+                                <h2 className="text-xl font-bold text-neutral-100">تأكيد الحذف</h2>
+                            </div>
+                            <p className="text-neutral-300 mb-6">
+                                هل أنت متأكد من حذف هذا المنتج؟
+                                <br />
+                                <span className="text-sm text-neutral-500">لا يمكن التراجع عن هذا الإجراء.</span>
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="flex-1 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg font-medium transition-colors"
+                                >
+                                    إلغاء
+                                </button>
+                                <button
+                                    onClick={executeDelete}
+                                    disabled={deleting}
+                                    className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                                >
+                                    {deleting ? "جاري الحذف..." : "نعم، احذف"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </DashboardLayout>
         </ProtectedRoute>
     );

@@ -60,11 +60,68 @@ const ImageSection = styled.div`
 const MainImage = styled.div`
   aspect-ratio: 1;
   background: #f5f5f5;
+  cursor: zoom-in;
+  position: relative;
   
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover img {
+    transform: scale(1.02);
+  }
+`;
+
+const ThumbnailsContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  
+  /* Hide scrollbar but keep functionality */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+    gap: 0.375rem;
+  }
+`;
+
+const Thumbnail = styled.button`
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 3px solid ${({ $active }) => $active ? '#F4A300' : 'transparent'};
+  opacity: ${({ $active }) => $active ? 1 : 0.6};
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+  background: #f5f5f5;
+  
+  &:hover {
+    opacity: 1;
+    border-color: ${({ $active }) => $active ? '#F4A300' : '#ddd'};
+  }
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  @media (max-width: 768px) {
+    width: 55px;
+    height: 55px;
+    border-width: 2px;
   }
 `;
 
@@ -287,6 +344,7 @@ export default function ProductDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariation, setSelectedVariation] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -384,14 +442,57 @@ export default function ProductDetailsPage() {
         <ProductLayout>
           <ImageSection>
             <MainImage>
-              {product.image_url ? (
-                <img src={getFullImageUrl(product.image_url)} alt={product.name} />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                  <Package size={80} color="#ccc" />
-                </div>
-              )}
+              {(() => {
+                // Get all images: primary + gallery images
+                const allImages = [];
+                if (product.image_url) allImages.push(product.image_url);
+                if (product.images && Array.isArray(product.images)) {
+                  product.images.forEach(img => {
+                    const url = typeof img === 'string' ? img : img.url || img.image_url;
+                    if (url && !allImages.includes(url)) allImages.push(url);
+                  });
+                }
+
+                const currentImage = selectedImage || allImages[0];
+
+                return currentImage ? (
+                  <img src={getFullImageUrl(currentImage)} alt={product.name} />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Package size={80} color="#ccc" />
+                  </div>
+                );
+              })()}
             </MainImage>
+
+            {/* Thumbnails - Show if multiple images */}
+            {(() => {
+              const allImages = [];
+              if (product.image_url) allImages.push(product.image_url);
+              if (product.images && Array.isArray(product.images)) {
+                product.images.forEach(img => {
+                  const url = typeof img === 'string' ? img : img.url || img.image_url;
+                  if (url && !allImages.includes(url)) allImages.push(url);
+                });
+              }
+
+              if (allImages.length > 1) {
+                return (
+                  <ThumbnailsContainer>
+                    {allImages.map((imgUrl, index) => (
+                      <Thumbnail
+                        key={index}
+                        $active={(selectedImage || allImages[0]) === imgUrl}
+                        onClick={() => setSelectedImage(imgUrl)}
+                      >
+                        <img src={getFullImageUrl(imgUrl)} alt={`${product.name} - ${index + 1}`} />
+                      </Thumbnail>
+                    ))}
+                  </ThumbnailsContainer>
+                );
+              }
+              return null;
+            })()}
           </ImageSection>
 
           <InfoSection>

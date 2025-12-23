@@ -315,6 +315,8 @@ export default function ProductsPage() {
   const [priceAdjustment, setPriceAdjustment] = useState({ type: "fixed", value: "" });
   const [stockAdjustment, setStockAdjustment] = useState({ type: "fixed", value: "" });
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [singleDeleteId, setSingleDeleteId] = useState<number | null>(null);
 
   // Navigation state
   const [activeCell, setActiveCell] = useState<CellPosition | null>(null);
@@ -400,13 +402,25 @@ export default function ProductsPage() {
     setShowBulkActions(selectedIds.size > 0);
   }, [selectedIds]);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+  // Open single delete confirmation modal
+  const handleDelete = (id: number) => {
+    console.log("🗑️ Opening single delete modal for product:", id);
+    setSingleDeleteId(id);
+  };
+
+  // Execute single delete
+  const executeSingleDelete = async () => {
+    if (!singleDeleteId) return;
+    console.log("🗑️ Executing single delete for product:", singleDeleteId);
     try {
-      await http.delete(`/products/${id}`);
+      await http.delete(`/products/${singleDeleteId}`);
       fetchProducts(currentPage);
-    } catch (error) {
+      showToast("تم حذف المنتج بنجاح", "success");
+    } catch (error: any) {
       console.error("Failed to delete product:", error);
+      showToast(`فشل في الحذف: ${error.response?.data?.message || error.message}`, "error");
+    } finally {
+      setSingleDeleteId(null);
     }
   };
 
@@ -617,22 +631,36 @@ export default function ProductsPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} منتج؟`)) return;
+  // Actually perform the delete (called from modal)
+  const executeDelete = async () => {
+    console.log("🗑️ Executing delete for IDs:", Array.from(selectedIds));
+    setShowDeleteConfirm(false);
     setSaving(true);
     try {
-      await Promise.all(
-        Array.from(selectedIds).map(id => http.delete(`/products/${id}`))
-      );
-      fetchProducts(currentPage);
+      console.log("🗑️ Sending delete requests...");
+      const deletePromises = Array.from(selectedIds).map(id => {
+        console.log(`🗑️ Deleting product ${id}...`);
+        return http.delete(`/products/${id}`);
+      });
+
+      await Promise.all(deletePromises);
+      console.log("🗑️ All products deleted successfully!");
+      await fetchProducts(currentPage);
       setSelectedIds(new Set());
-      showToast(`${selectedIds.size} products deleted`, "success");
-    } catch (error) {
-      console.error("Failed to delete:", error);
-      showToast("Failed to delete", "error");
+      showToast(`تم حذف المنتجات بنجاح`, "success");
+    } catch (error: any) {
+      console.error("❌ Failed to delete:", error);
+      console.error("❌ Error details:", error.response?.data);
+      showToast(`فشل في الحذف: ${error.response?.data?.message || error.message}`, "error");
     } finally {
       setSaving(false);
     }
+  };
+
+  // Open delete confirmation modal
+  const handleBulkDelete = () => {
+    console.log("🗑️ Opening delete confirmation modal");
+    setShowDeleteConfirm(true);
   };
 
   const handleBulkPriceAdjust = async () => {
@@ -959,7 +987,11 @@ export default function ProductsPage() {
 
               {/* Delete Button */}
               <button
-                onClick={handleBulkDelete}
+                onClick={() => {
+                  console.log("🔴 BULK DELETE BUTTON CLICKED!");
+                  alert("Delete button clicked! Selected: " + selectedIds.size + " products");
+                  handleBulkDelete();
+                }}
                 disabled={saving}
                 className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-sm text-red-400 transition-colors"
               >
@@ -1550,6 +1582,73 @@ export default function ProductsPage() {
             />
           )
         }
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-neutral-900 border border-neutral-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-500/20 rounded-full">
+                  <Trash2 className="h-6 w-6 text-red-400" />
+                </div>
+                <h2 className="text-xl font-bold text-neutral-100">تأكيد الحذف</h2>
+              </div>
+              <p className="text-neutral-300 mb-6">
+                هل أنت متأكد من حذف <span className="font-bold text-red-400">{selectedIds.size}</span> منتج؟
+                <br />
+                <span className="text-sm text-neutral-500">لا يمكن التراجع عن هذا الإجراء.</span>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg font-medium transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={executeDelete}
+                  disabled={saving}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  {saving ? "جاري الحذف..." : "نعم، احذف"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Single Delete Confirmation Modal */}
+        {singleDeleteId !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-neutral-900 border border-neutral-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-500/20 rounded-full">
+                  <Trash2 className="h-6 w-6 text-red-400" />
+                </div>
+                <h2 className="text-xl font-bold text-neutral-100">تأكيد الحذف</h2>
+              </div>
+              <p className="text-neutral-300 mb-6">
+                هل أنت متأكد من حذف هذا المنتج؟
+                <br />
+                <span className="text-sm text-neutral-500">لا يمكن التراجع عن هذا الإجراء.</span>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setSingleDeleteId(null)}
+                  className="flex-1 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg font-medium transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={executeSingleDelete}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  نعم، احذف
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Keyboard Shortcuts Modal */}
         <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />

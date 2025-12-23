@@ -13,6 +13,10 @@ export const API_BASE_URL = RAW_BASE;
  */
 export function getFullImageUrl(url: string): string {
   if (!url) return "";
+  // إذا كانت Base64 (صورة مرفوعة من الجهاز)
+  if (url.startsWith("data:image")) {
+    return url;
+  }
   // إذا كانت URL كاملة بالفعل
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
