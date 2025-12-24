@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { addItem } from '@/redux/slices/cartSlice';
 import { ShoppingCart, Package, Loader2, Search, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLocaleStore } from '@/store/locale-store';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -211,10 +212,10 @@ const ResultsCount = styled.div`
   color: ${({ theme }) => theme?.colors?.textSecondary || '#666'};
 `;
 
-// Helper function to get product price display
-const getProductPrice = (product) => {
+// Helper function to get product price display (accepts formatPrice function)
+const getProductPrice = (product, formatPrice) => {
   if (product.price && parseFloat(product.price) > 0) {
-    return `${product.price} درهم`;
+    return formatPrice(parseFloat(product.price));
   }
 
   // Backend uses 'variants' not 'variations'
@@ -228,13 +229,13 @@ const getProductPrice = (product) => {
       const maxPrice = Math.max(...prices);
 
       if (minPrice === maxPrice) {
-        return `${minPrice} درهم`;
+        return formatPrice(minPrice);
       }
-      return `${minPrice} - ${maxPrice} درهم`;
+      return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
     }
   }
 
-  return 'السعر حسب الاختيار';
+  return 'Price varies';
 };
 
 const isVariableProduct = (product) => {
@@ -261,6 +262,7 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categories, setCategories] = useState([]);
   const dispatch = useDispatch();
+  const { formatPrice, t } = useLocaleStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -383,7 +385,7 @@ export default function ProductsPage() {
                 </Link>
                 <ProductInfo>
                   <ProductName>{product.name}</ProductName>
-                  <ProductPrice>{getProductPrice(product)}</ProductPrice>
+                  <ProductPrice>{getProductPrice(product, formatPrice)}</ProductPrice>
                   <ProductStock $inStock={isInStock(product)}>
                     {isVariableProduct(product)
                       ? 'متعدد الخيارات'

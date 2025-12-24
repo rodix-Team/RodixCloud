@@ -8,6 +8,7 @@ import { selectCartItems, selectCartTotalPrice, clearCart } from '@/redux/slices
 import { http, getFullImageUrl } from '@/lib/http';
 import { Package, CreditCard, Truck, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLocaleStore } from '@/store/locale-store';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -275,6 +276,7 @@ export default function CheckoutPage() {
   const items = useSelector(selectCartItems);
   const totalPrice = useSelector(selectCartTotalPrice);
   const dispatch = useDispatch();
+  const { formatPrice } = useLocaleStore();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -441,22 +443,22 @@ export default function CheckoutPage() {
                       <h4>{item.name}</h4>
                       <p>الكمية: {item.quantity}</p>
                     </ItemInfo>
-                    <ItemPrice>{(parseFloat(item.price) * item.quantity).toFixed(2)} درهم</ItemPrice>
+                    <ItemPrice>{formatPrice(parseFloat(item.price) * item.quantity)}</ItemPrice>
                   </OrderItem>
                 ))}
               </OrderItems>
 
               <SummaryRow>
                 <span>المجموع الفرعي</span>
-                <span>{totalPrice.toFixed(2)} درهم</span>
+                <span>{formatPrice(totalPrice)}</span>
               </SummaryRow>
               <SummaryRow>
                 <span>الشحن</span>
-                <span>{shipping === 0 ? 'مجاني' : `${shipping} درهم`}</span>
+                <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
               </SummaryRow>
               <SummaryRow className="total">
                 <span>الإجمالي</span>
-                <span>{finalTotal.toFixed(2)} درهم</span>
+                <span>{formatPrice(finalTotal)}</span>
               </SummaryRow>
 
               <SubmitButton type="submit" disabled={loading}>

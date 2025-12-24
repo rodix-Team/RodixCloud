@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { ShoppingCart, Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 import { selectCartTotalItems } from '@/redux/slices/cartSlice';
+import { LocaleSelector } from '@/components/LocaleSelector';
 
 const HeaderContainer = styled.header`
   background: white;
@@ -140,50 +141,52 @@ const MobileNavLink = styled(Link)`
 `;
 
 export default function StoreHeader() {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const cartItemsCount = useSelector(selectCartTotalItems);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const cartItemsCount = useSelector(selectCartTotalItems);
 
-    return (
-        <HeaderContainer>
-            <HeaderInner>
-                <Logo href="/">🍯 متجر العسل</Logo>
+  return (
+    <HeaderContainer>
+      <HeaderInner>
+        <Logo href="/">🍯 متجر العسل</Logo>
 
-                <Nav>
-                    <NavLink href="/">الرئيسية</NavLink>
-                    <NavLink href="/products">المنتجات</NavLink>
-                    <NavLink href="/about">من نحن</NavLink>
-                    <NavLink href="/contact">اتصل بنا</NavLink>
-                </Nav>
+        <Nav>
+          <NavLink href="/">الرئيسية</NavLink>
+          <NavLink href="/products">المنتجات</NavLink>
+          <NavLink href="/about">من نحن</NavLink>
+          <NavLink href="/contact">اتصل بنا</NavLink>
+        </Nav>
 
-                <Actions>
-                    <CartButton href="/cart">
-                        <ShoppingCart size={22} />
-                        {cartItemsCount > 0 && <CartBadge>{cartItemsCount}</CartBadge>}
-                    </CartButton>
+        <Actions>
+          <LocaleSelector />
 
-                    <MobileMenuButton onClick={() => setMobileMenuOpen(true)}>
-                        <Menu size={24} />
-                    </MobileMenuButton>
-                </Actions>
-            </HeaderInner>
+          <CartButton href="/cart">
+            <ShoppingCart size={22} />
+            {cartItemsCount > 0 && <CartBadge>{cartItemsCount}</CartBadge>}
+          </CartButton>
 
-            {/* Mobile Menu */}
-            <Overlay $isOpen={mobileMenuOpen} onClick={() => setMobileMenuOpen(false)} />
-            <MobileMenu $isOpen={mobileMenuOpen}>
-                <button
-                    onClick={() => setMobileMenuOpen(false)}
-                    style={{ background: 'none', border: 'none', marginBottom: '2rem' }}
-                >
-                    <X size={24} />
-                </button>
-                <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>الرئيسية</MobileNavLink>
-                <MobileNavLink href="/products" onClick={() => setMobileMenuOpen(false)}>المنتجات</MobileNavLink>
-                <MobileNavLink href="/about" onClick={() => setMobileMenuOpen(false)}>من نحن</MobileNavLink>
-                <MobileNavLink href="/contact" onClick={() => setMobileMenuOpen(false)}>اتصل بنا</MobileNavLink>
-                <MobileNavLink href="/cart" onClick={() => setMobileMenuOpen(false)}>
-                    🛒 السلة ({cartItemsCount})
-                </MobileNavLink>
-            </MobileMenu>
-        </HeaderContainer>
-    );
+          <MobileMenuButton onClick={() => setMobileMenuOpen(true)}>
+            <Menu size={24} />
+          </MobileMenuButton>
+        </Actions>
+      </HeaderInner>
+
+      {/* Mobile Menu */}
+      <Overlay $isOpen={mobileMenuOpen} onClick={() => setMobileMenuOpen(false)} />
+      <MobileMenu $isOpen={mobileMenuOpen}>
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          style={{ background: 'none', border: 'none', marginBottom: '2rem' }}
+        >
+          <X size={24} />
+        </button>
+        <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>الرئيسية</MobileNavLink>
+        <MobileNavLink href="/products" onClick={() => setMobileMenuOpen(false)}>المنتجات</MobileNavLink>
+        <MobileNavLink href="/about" onClick={() => setMobileMenuOpen(false)}>من نحن</MobileNavLink>
+        <MobileNavLink href="/contact" onClick={() => setMobileMenuOpen(false)}>اتصل بنا</MobileNavLink>
+        <MobileNavLink href="/cart" onClick={() => setMobileMenuOpen(false)}>
+          🛒 السلة ({cartItemsCount})
+        </MobileNavLink>
+      </MobileMenu>
+    </HeaderContainer>
+  );
 }
