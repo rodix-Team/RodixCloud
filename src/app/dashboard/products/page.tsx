@@ -8,6 +8,7 @@ import { http, getFullImageUrl } from "@/lib/http";
 import { useUndoRedo, ProductChange } from "@/hooks/useUndoRedo";
 import { useToast } from "@/components/ui/Toast";
 import { QuickEditModal } from "@/components/ui/quick-edit-modal";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
   Package, Plus, Edit, Trash2, Search, Filter,
   Check, X, ChevronDown, ChevronLeft, ChevronRight, Percent, DollarSign,
@@ -52,13 +53,14 @@ type Product = {
 };
 
 // Helper functions for variable products
-const getVariantPriceRange = (variants?: ProductVariant[]): string => {
-  if (!variants || variants.length === 0) return "$0";
+// Helper functions for variable products
+const getVariantPriceRange = (variants: ProductVariant[] | undefined, formatPrice: (amount: number) => string): string => {
+  if (!variants || variants.length === 0) return formatPrice(0);
   const prices = variants.map(v => parseFloat(v.price) || 0);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
-  if (min === max) return `$${min.toFixed(2)}`;
-  return `$${min.toFixed(2)} - $${max.toFixed(2)}`;
+  if (min === max) return formatPrice(min);
+  return `${formatPrice(min)} - ${formatPrice(max)}`;
 };
 
 const getVariantTotalStock = (variants?: ProductVariant[]): number => {
@@ -305,6 +307,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const { formatPrice, getCurrencySymbol } = useSettings();
 
   // Bulk edit state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -920,8 +923,8 @@ export default function ProductsPage() {
                         className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-sm text-neutral-200"
                       >
                         <option value="fixed">Set to fixed price</option>
-                        <option value="increase">Increase by $</option>
-                        <option value="decrease">Decrease by $</option>
+                        <option value="increase">Increase by {getCurrencySymbol()}</option>
+                        <option value="decrease">Decrease by {getCurrencySymbol()}</option>
                         <option value="percent_increase">Increase by %</option>
                         <option value="percent_decrease">Decrease by %</option>
                       </select>
@@ -1353,7 +1356,7 @@ export default function ProductsPage() {
                                   {product.type === "simple" ? (
                                     <EditableCell
                                       value={product.price || "0"}
-                                      prefix="$"
+                                      prefix={getCurrencySymbol()}
                                       type="number"
                                       onSave={(val) => handleInlineUpdate(product.id, "price", val)}
                                       className="text-sm text-neutral-200"
@@ -1366,7 +1369,7 @@ export default function ProductsPage() {
                                     />
                                   ) : (
                                     <span className="text-sm text-neutral-200">
-                                      {getVariantPriceRange(product.variants)}
+                                      {getVariantPriceRange(product.variants, formatPrice)}
                                     </span>
                                   )}
                                 </td>
@@ -1374,7 +1377,7 @@ export default function ProductsPage() {
                               {visibleColumns.has("compare_price") && (
                                 <td className="py-4 px-4">
                                   {product.compare_at_price ? (
-                                    <span className="text-sm text-neutral-400 line-through">${product.compare_at_price}</span>
+                                    <span className="text-sm text-neutral-400 line-through">{product.compare_at_price ? formatPrice(parseFloat(product.compare_at_price)) : ''}</span>
                                   ) : (
                                     <span className="text-sm text-neutral-500">-</span>
                                   )}
@@ -1383,7 +1386,7 @@ export default function ProductsPage() {
                               {visibleColumns.has("cost") && (
                                 <td className="py-4 px-4">
                                   {product.cost ? (
-                                    <span className="text-sm text-amber-400">${product.cost}</span>
+                                    <span className="text-sm text-amber-400">{product.cost ? formatPrice(parseFloat(product.cost)) : ''}</span>
                                   ) : (
                                     <span className="text-sm text-neutral-500">-</span>
                                   )}

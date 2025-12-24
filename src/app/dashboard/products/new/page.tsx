@@ -9,6 +9,7 @@ import { VariantBuilder } from "@/components/ui/variant-builder";
 import { http } from "@/lib/http";
 import { ArrowLeft, Save, Package, Layers, Sparkles, Search, Truck, BarChart3, Tag, ChevronDown, ChevronUp, Info, FolderTree } from "lucide-react";
 import Link from "next/link";
+import { useSettings } from "@/contexts/SettingsContext";
 
 type ImageItem = { id: string; url: string; isPrimary?: boolean };
 type VariantOption = { name: string; values: string[] };
@@ -33,6 +34,7 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"simple" | "variable">("simple");
+  const { formatPrice, getCurrencySymbol } = useSettings();
 
   // Basic Info
   const [name, setName] = useState("");
@@ -361,7 +363,7 @@ export default function NewProductPage() {
                           Price *
                         </label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">{getCurrencySymbol()}</span>
                           <input
                             type="number"
                             value={price}
@@ -381,7 +383,7 @@ export default function NewProductPage() {
                           <span className="ml-1 text-neutral-500 text-xs">(Original price)</span>
                         </label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">{getCurrencySymbol()}</span>
                           <input
                             type="number"
                             value={compareAtPrice}
@@ -405,7 +407,7 @@ export default function NewProductPage() {
                           <span className="ml-1 text-neutral-500 text-xs">(for profit calculation)</span>
                         </label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">{getCurrencySymbol()}</span>
                           <input
                             type="number"
                             value={cost}
@@ -425,7 +427,7 @@ export default function NewProductPage() {
                         <div className="flex items-center gap-2">
                           <BarChart3 className="h-4 w-4 text-emerald-400" />
                           <span className="text-sm text-neutral-300">Profit:</span>
-                          <span className="text-sm font-semibold text-emerald-400">${calculateMargin()?.profit}</span>
+                          <span className="text-sm font-semibold text-emerald-400">{formatPrice(parseFloat(calculateMargin()?.profit || '0'))}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-neutral-300">Margin:</span>
@@ -736,8 +738,8 @@ export default function NewProductPage() {
                           <label
                             key={category.id}
                             className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCategories.includes(category.id)
-                                ? "bg-emerald-500/20 border border-emerald-500/50"
-                                : "bg-neutral-800 border border-neutral-700 hover:border-neutral-600"
+                              ? "bg-emerald-500/20 border border-emerald-500/50"
+                              : "bg-neutral-800 border border-neutral-700 hover:border-neutral-600"
                               }`}
                           >
                             <input
@@ -747,8 +749,8 @@ export default function NewProductPage() {
                               className="sr-only"
                             />
                             <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedCategories.includes(category.id)
-                                ? "bg-emerald-500 border-emerald-500"
-                                : "border-neutral-600"
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "border-neutral-600"
                               }`}>
                               {selectedCategories.includes(category.id) && (
                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">

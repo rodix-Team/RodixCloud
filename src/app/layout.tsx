@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -21,9 +22,10 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={`${cairo.variable} antialiased`} style={{ fontFamily: 'var(--font-cairo), Cairo, sans-serif' }}>
-        {children}
+        <SettingsProvider>
+          {children}
+        </SettingsProvider>
       </body>
     </html>
   );
 }
-

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ProtectedRoute } from "@/components/protected-route";
 import { DashboardLayout } from "@/components/dashboard";
 import { http, getFullImageUrl } from "@/lib/http";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
     ArrowLeft, ShoppingCart, User, MapPin, CreditCard,
     Clock, Truck, CheckCircle, XCircle, RefreshCw, Package,
@@ -114,6 +115,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     const [updating, setUpdating] = useState(false);
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    // Settings for currency
+    const { formatPrice } = useSettings();
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -368,7 +372,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                                                 الكمية: <span className="text-white font-medium">{item.quantity}</span>
                                                             </span>
                                                             <span className="text-sm text-neutral-500">
-                                                                السعر: <span className="text-white font-medium">{productPrice} درهم</span>
+                                                                السعر: <span className="text-white font-medium">{formatPrice(parseFloat(productPrice))}</span>
                                                             </span>
                                                         </div>
                                                     </div>
@@ -376,7 +380,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                                     {/* Total */}
                                                     <div className="text-right">
                                                         <p className="text-lg font-bold text-emerald-400">
-                                                            {itemTotal} درهم
+                                                            {formatPrice(parseFloat(itemTotal))}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -389,27 +393,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                                         <div className="space-y-3">
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-neutral-400">المجموع الفرعي</span>
-                                                <span className="text-white font-medium">{order.subtotal || 0} درهم</span>
+                                                <span className="text-white font-medium">{formatPrice(parseFloat(order.subtotal || '0'))}</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-neutral-400">الضريبة</span>
-                                                <span className="text-white font-medium">{order.tax || 0} درهم</span>
+                                                <span className="text-white font-medium">{formatPrice(parseFloat(order.tax || '0'))}</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-neutral-400">تكلفة الشحن</span>
-                                                <span className="text-white font-medium">{order.shipping_cost || 0} درهم</span>
+                                                <span className="text-white font-medium">{formatPrice(parseFloat(order.shipping_cost || '0'))}</span>
                                             </div>
                                             {order.discount && parseFloat(order.discount) > 0 && (
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-neutral-400">الخصم</span>
-                                                    <span className="text-emerald-400 font-medium">-{order.discount} درهم</span>
+                                                    <span className="text-emerald-400 font-medium">-{formatPrice(parseFloat(order.discount))}</span>
                                                 </div>
                                             )}
                                             <div className="pt-4 mt-4 border-t border-neutral-700">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-lg font-semibold text-white">الإجمالي</span>
                                                     <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                                                        {order.total || 0} درهم
+                                                        {formatPrice(parseFloat(order.total || '0'))}
                                                     </span>
                                                 </div>
                                             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -29,6 +30,8 @@ ChartJS.register(
 export default function SalesChart() {
     const chartRef = useRef<ChartJS<"line">>(null);
 
+    const { formatPrice } = useSettings();
+
     // Demo data - 30 days revenue
     const labels = Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`);
     const revenueData = Array.from({ length: 30 }, (_, i) => {
@@ -42,7 +45,7 @@ export default function SalesChart() {
         labels,
         datasets: [
             {
-                label: "Revenue ($)",
+                label: "Revenue",
                 data: revenueData,
                 fill: true,
                 borderColor: "rgb(16, 185, 129)", // emerald-500
@@ -82,7 +85,7 @@ export default function SalesChart() {
                 displayColors: false,
                 callbacks: {
                     label: (context: any) => {
-                        return `$${context.parsed.y.toFixed(2)}`;
+                        return formatPrice(context.parsed.y);
                     },
                 },
             },
@@ -115,7 +118,7 @@ export default function SalesChart() {
                         size: 10,
                     },
                     callback: (value: any) => {
-                        return `$${value}`;
+                        return formatPrice(value);
                     },
                 },
             },

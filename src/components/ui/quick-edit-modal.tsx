@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Save, Loader2, Package, DollarSign, Box, Tag, Truck, Info } from "lucide-react";
 import { ImageUpload } from "./image-upload";
 import { http } from "@/lib/http";
+import { useSettings } from "@/contexts/SettingsContext";
+
 
 type ImageItem = { id: string; url: string; isPrimary?: boolean; path?: string };
 
@@ -70,6 +72,7 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState<"basic" | "pricing" | "inventory" | "organization">("basic");
+    const { formatPrice, getCurrencySymbol } = useSettings();
 
     // Reset form when product changes
     useEffect(() => {
@@ -223,8 +226,8 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
-                                    ? "border-emerald-500 text-emerald-400"
-                                    : "border-transparent text-neutral-400 hover:text-neutral-200"
+                                ? "border-emerald-500 text-emerald-400"
+                                : "border-transparent text-neutral-400 hover:text-neutral-200"
                                 }`}
                         >
                             <tab.icon className="h-4 w-4" />
@@ -295,8 +298,8 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                                         type="button"
                                         onClick={() => setStatus("active")}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${status === "active"
-                                                ? "bg-emerald-500 text-white"
-                                                : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700"
+                                            ? "bg-emerald-500 text-white"
+                                            : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700"
                                             }`}
                                     >
                                         <span className={`h-2 w-2 rounded-full ${status === "active" ? "bg-white" : "bg-emerald-400"}`} />
@@ -306,8 +309,8 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                                         type="button"
                                         onClick={() => setStatus("draft")}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${status === "draft"
-                                                ? "bg-neutral-600 text-white"
-                                                : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700"
+                                            ? "bg-neutral-600 text-white"
+                                            : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700"
                                             }`}
                                     >
                                         <span className={`h-2 w-2 rounded-full ${status === "draft" ? "bg-white" : "bg-neutral-400"}`} />
@@ -327,7 +330,7 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                                         Price *
                                     </label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">{getCurrencySymbol()}</span>
                                         <input
                                             type="number"
                                             value={price}
@@ -344,7 +347,7 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                                         Compare at Price
                                     </label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">{getCurrencySymbol()}</span>
                                         <input
                                             type="number"
                                             value={compareAtPrice}
@@ -361,7 +364,7 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                                         Cost per item
                                     </label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">{getCurrencySymbol()}</span>
                                         <input
                                             type="number"
                                             value={cost}
@@ -380,7 +383,7 @@ export function QuickEditModal({ product, isOpen, onClose, onSave }: QuickEditMo
                                     <div className="flex items-center gap-4 text-sm">
                                         <span className="text-neutral-300">Profit:</span>
                                         <span className="font-semibold text-emerald-400">
-                                            ${(parseFloat(price) - parseFloat(cost)).toFixed(2)}
+                                            {formatPrice(parseFloat(price) - parseFloat(cost))}
                                         </span>
                                         <span className="text-neutral-300">Margin:</span>
                                         <span className="font-semibold text-emerald-400">

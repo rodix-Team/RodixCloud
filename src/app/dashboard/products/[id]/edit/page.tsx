@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/protected-route";
 import { DashboardLayout } from "@/components/dashboard";
 import { http, getFullImageUrl } from "@/lib/http";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
     ArrowLeft, Save, Package, Loader2, Trash2,
     ChevronDown, ChevronUp, Image as ImageIcon, Tag, Layers,
@@ -114,6 +115,7 @@ export default function EditProductPage() {
     const router = useRouter();
     const params = useParams();
     const productId = params.id as string;
+    const { formatPrice, getCurrencySymbol } = useSettings();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -692,9 +694,9 @@ export default function EditProductPage() {
                                     <span className="text-amber-400 font-semibold">
                                         {variants.length > 0 ? (
                                             <>
-                                                {Math.min(...variants.map(v => parseFloat(v.price) || 0)).toFixed(2)} - {Math.max(...variants.map(v => parseFloat(v.price) || 0)).toFixed(2)} درهم
+                                                {formatPrice(Math.min(...variants.map(v => parseFloat(v.price) || 0)))} - {formatPrice(Math.max(...variants.map(v => parseFloat(v.price) || 0)))}
                                             </>
-                                        ) : '0.00 درهم'}
+                                        ) : formatPrice(0)}
                                     </span>
                                 </div>
                             </div>
@@ -845,7 +847,7 @@ export default function EditProductPage() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-xs text-neutral-500 mb-1">السعر (درهم)</label>
+                                                            <label className="block text-xs text-neutral-500 mb-1">السعر ({getCurrencySymbol()})</label>
                                                             <input
                                                                 type="number"
                                                                 step="0.01"

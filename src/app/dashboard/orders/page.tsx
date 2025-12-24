@@ -6,6 +6,7 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { DashboardLayout, DashboardSection } from "@/components/dashboard";
 import { http } from "@/lib/http";
 import { useNotificationStore } from "@/store/notification-store";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
   ShoppingCart, Search, Filter, Eye, Truck, Package,
   ChevronDown, Check, X, Clock, AlertTriangle,
@@ -109,6 +110,9 @@ export default function OrdersPage() {
   // Notification store
   const { addNotification, soundEnabled, toggleSound, lastOrderCount, setLastOrderCount } = useNotificationStore();
 
+  // Settings for currency
+  const { formatPrice } = useSettings();
+
   // Fetch orders
   const fetchOrders = useCallback(async (page = 1) => {
     setLoading(true);
@@ -156,7 +160,7 @@ export default function OrdersPage() {
           addNotification({
             type: "order",
             title: `🎉 طلب جديد #${latestOrder?.order_number || ''}`,
-            message: `${latestOrder?.customer_name || 'Unknown'} - $${latestOrder?.total || '0'}`,
+            message: `${latestOrder?.customer_name || 'Unknown'} - ${formatPrice(parseFloat(latestOrder?.total || '0'))}`,
             data: { orderId: latestOrder?.id }
           });
 
@@ -520,7 +524,7 @@ export default function OrdersPage() {
                             )}
                           </td>
                           <td className="py-4 px-4">
-                            <span className="text-sm font-medium text-neutral-200">${order.total}</span>
+                            <span className="text-sm font-medium text-neutral-200">{formatPrice(parseFloat(order.total))}</span>
                           </td>
                           <td className="py-4 px-4 relative">
                             <button

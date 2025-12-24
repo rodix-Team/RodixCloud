@@ -7,7 +7,7 @@ import { http, getFullImageUrl } from '@/lib/http';
 import { useDispatch } from 'react-redux';
 import { addItem } from '@/redux/slices/cartSlice';
 import { ShoppingCart, Package, Loader2, ArrowLeft } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useLocaleStore } from '@/store/locale-store';
 
 // ========== Styled Components ==========
 
@@ -224,10 +224,10 @@ const ViewAllLink = styled(Link)`
 // ========== Component ==========
 
 // Helper function to get product price display
-const getProductPrice = (product) => {
+const getProductPrice = (product, formatPrice) => {
   // If product has a direct price, use it
   if (product.price && parseFloat(product.price) > 0) {
-    return `${product.price} درهم`;
+    return formatPrice(parseFloat(product.price));
   }
 
   // If product has variants, calculate price range
@@ -242,9 +242,9 @@ const getProductPrice = (product) => {
       const maxPrice = Math.max(...prices);
 
       if (minPrice === maxPrice) {
-        return `${minPrice} درهم`;
+        return formatPrice(minPrice);
       }
-      return `${minPrice} - ${maxPrice} درهم`;
+      return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
     }
   }
 
@@ -260,6 +260,7 @@ export default function StorePage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
+  const { formatPrice } = useLocaleStore();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -338,7 +339,7 @@ export default function StorePage() {
                   </Link>
                   <ProductInfo>
                     <ProductName>{product.name}</ProductName>
-                    <ProductPrice>{getProductPrice(product)}</ProductPrice>
+                    <ProductPrice>{getProductPrice(product, formatPrice)}</ProductPrice>
                     <AddToCartButton onClick={() => handleAddToCart(product)}>
                       <ShoppingCart size={18} />
                       {isVariableProduct(product) ? 'عرض الخيارات' : 'أضف للسلة'}

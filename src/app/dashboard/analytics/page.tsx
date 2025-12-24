@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { ProtectedRoute } from "@/components/protected-route";
 import { DashboardLayout, DashboardSection, DashboardGrid } from "@/components/dashboard";
 import { http } from "@/lib/http";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
     TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Eye,
     BarChart3, PieChart, MapPin, RefreshCw, Calendar, ArrowUpRight,
@@ -206,10 +207,10 @@ export default function AnalyticsPage() {
             });
             const ordersByStatus = Object.entries(statusCounts).map(([status, count]) => ({
                 status: status === 'pending' ? 'قيد الانتظار' :
-                        status === 'processing' ? 'قيد المعالجة' :
+                    status === 'processing' ? 'قيد المعالجة' :
                         status === 'shipped' ? 'تم الشحن' :
-                        status === 'delivered' ? 'تم التسليم' :
-                        status === 'cancelled' ? 'ملغي' : status,
+                            status === 'delivered' ? 'تم التسليم' :
+                                status === 'cancelled' ? 'ملغي' : status,
                 count
             }));
 
@@ -241,12 +242,11 @@ export default function AnalyticsPage() {
         fetchAnalytics();
     }, [fetchAnalytics]);
 
+    // Settings for currency
+    const { formatPrice } = useSettings();
+
     const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('ar-AE', {
-            style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(value) + ' درهم';
+        return formatPrice(value);
     };
 
     const formatNumber = (value: number) => {
@@ -308,11 +308,10 @@ export default function AnalyticsPage() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                                        activeTab === tab.id
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === tab.id
                                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                             : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
-                                    }`}
+                                        }`}
                                 >
                                     <Icon className="h-4 w-4" />
                                     {tab.label}
@@ -375,8 +374,8 @@ export default function AnalyticsPage() {
                                                     <AreaChart data={data.salesTimeline}>
                                                         <defs>
                                                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                                             </linearGradient>
                                                         </defs>
                                                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import { ProtectedRoute } from "@/components/protected-route";
 import { DashboardLayout, DashboardSection } from "@/components/dashboard";
 import {
@@ -50,6 +51,7 @@ const DEMO_ZONES: ShippingZone[] = [
 
 export default function ShippingPage() {
     const [zones, setZones] = useState(DEMO_ZONES);
+    const { formatPrice } = useSettings();
 
     return (
         <ProtectedRoute>
@@ -125,7 +127,7 @@ export default function ShippingPage() {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-sm font-medium text-emerald-400">
-                                                    ${method.price.toFixed(2)}
+                                                    {formatPrice(method.price)}
                                                 </p>
                                             </div>
                                         </div>

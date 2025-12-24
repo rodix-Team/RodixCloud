@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboard";
 import { StatsGridSkeleton, ChartSkeleton } from "@/components/ui/loading";
 import { http } from "@/lib/http";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const DashboardScene = dynamic(
   () => import("@/components/dashboard/DashboardScene"),
@@ -92,12 +93,13 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
+  const { formatPrice } = useSettings();
+
   const dashboardStats = stats ? [
     {
       id: "revenue",
       label: "Monthly Revenue",
-      value: stats.monthly_revenue.value.toLocaleString(),
-      prefix: "$",
+      value: formatPrice(stats.monthly_revenue.value),
       change: `${stats.monthly_revenue.change >= 0 ? "+" : ""}${stats.monthly_revenue.change}% vs last month`,
       changeType: stats.monthly_revenue.change_type,
     },
