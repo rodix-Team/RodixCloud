@@ -15,10 +15,12 @@ interface StoreSettings {
     store_email: string;
     store_phone: string;
     store_address: string;
-    currency: string;
-    timezone: string;
+    store_currency: string;
+    store_language: string;
+    store_timezone: string;
     tax_rate: number;
     logo_url: string;
+    free_shipping_min: number;
     // Checkout settings
     enable_guest_checkout: boolean;
     require_phone: boolean;
@@ -53,14 +55,16 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("general");
 
     const [settings, setSettings] = useState<StoreSettings>({
-        store_name: "",
+        store_name: "Rodix Store",
         store_email: "",
         store_phone: "",
         store_address: "",
-        currency: "USD",
-        timezone: "UTC",
+        store_currency: "USD",
+        store_language: "en",
+        store_timezone: "UTC",
         tax_rate: 0,
         logo_url: "",
+        free_shipping_min: 200,
         // Checkout defaults
         enable_guest_checkout: true,
         require_phone: false,
@@ -72,14 +76,17 @@ export default function SettingsPage() {
             setLoading(true);
             try {
                 const response = await http.get("/settings");
-                if (response.data) {
-                    setSettings(response.data);
+                if (response.data?.data) {
+                    // Merge API data with defaults
+                    setSettings(prev => ({ ...prev, ...response.data.data }));
+                } else if (response.data) {
+                    setSettings(prev => ({ ...prev, ...response.data }));
                 }
             } catch {
                 // API not available, use localStorage
                 const saved = localStorage.getItem("store_settings");
                 if (saved) {
-                    setSettings(JSON.parse(saved));
+                    setSettings(prev => ({ ...prev, ...JSON.parse(saved) }));
                 }
             } finally {
                 setLoading(false);
@@ -271,8 +278,8 @@ export default function SettingsPage() {
                                             </div>
                                         </label>
                                         <select
-                                            value={settings.currency}
-                                            onChange={(e) => updateSetting("currency", e.target.value)}
+                                            value={settings.store_currency}
+                                            onChange={(e) => updateSetting("store_currency", e.target.value)}
                                             className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                                         >
                                             {CURRENCIES.map((c) => (
@@ -287,8 +294,8 @@ export default function SettingsPage() {
                                             Timezone
                                         </label>
                                         <select
-                                            value={settings.timezone}
-                                            onChange={(e) => updateSetting("timezone", e.target.value)}
+                                            value={settings.store_timezone}
+                                            onChange={(e) => updateSetting("store_timezone", e.target.value)}
                                             className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                                         >
                                             {TIMEZONES.map((tz) => (
