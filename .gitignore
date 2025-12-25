@@ -72,3 +72,16 @@ docker-compose.override.yml
 .directory
 │── content_recommender.py/
 │── items.csv/
+
+# Next.js (from remote)
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+.vercel

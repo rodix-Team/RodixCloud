@@ -1,0 +1,194 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { Upload, X, Link as LinkIcon, Image as ImageIcon, Star } from "lucide-react";
+
+type ImageItem = {
+  id: string;
+  url: string;
+  isPrimary?: boolean;
+};
+
+type ImageUploadProps = {
+  images: ImageItem[];
+  onChange: (images: ImageItem[]) => void;
+  maxImages?: number;
+  showPrimarySelector?: boolean;
+};
+
+export function ImageUpload({ 
+  images, 
+  onChange, 
+  maxImages = 5,
+  showPrimarySelector = true 
+}: ImageUploadProps) {
+  const [urlInput, setUrlInput] = useState("");
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  const addImageFromUrl = () => {
+    if (!urlInput.trim()) return;
+    
+    const newImage: ImageItem = {
+      id: generateId(),
+      url: urlInput.trim(),
+      isPrimary: images.length === 0,
+    };
+    
+    onChange([...images, newImage]);
+    setUrlInput("");
+    setShowUrlInput(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const newImage: ImageItem = {
+          id: generateId(),
+          url: event.target?.result as string,
+          isPrimary: images.length === 0,
+        };
+        onChange([...images, newImage]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (id: string) => {
+    const newImages = images.filter((img) => img.id !== id);
+    // إذا حذفنا الصورة الرئيسية، نخلي الأولى رئيسية
+    if (newImages.length > 0 && !newImages.some((img) => img.isPrimary)) {
+      newImages[0].isPrimary = true;
+    }
+    onChange(newImages);
+  };
+
+  const setPrimary = (id: string) => {
+    const newImages = images.map((img) => ({
+      ...img,
+      isPrimary: img.id === id,
+    }));
+    onChange(newImages);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Images Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {images.map((image) => (
+          <div
+            key={image.id}
+            className={`relative group aspect-square rounded-lg overflow-hidden border-2 ${
+              image.isPrimary ? "border-emerald-500" : "border-neutral-700"
+            }`}
+          >
+            <img
+              src={image.url}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              {showPrimarySelector && !image.isPrimary && (
+                <button
+                  type="button"
+                  onClick={() => setPrimary(image.id)}
+                  className="p-2 bg-emerald-500 rounded-lg text-white hover:bg-emerald-600 transition-colors"
+                  title="Set as primary"
+                >
+                  <Star className="h-4 w-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => removeImage(image.id)}
+                className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600 transition-colors"
+                title="Remove"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Primary Badge */}
+            {image.isPrimary && (
+              <div className="absolute top-2 left-2 px-2 py-1 bg-emerald-500 rounded text-[10px] font-medium text-white">
+                Primary
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Add Button */}
+        {images.length < maxImages && (
+          <div className="aspect-square rounded-lg border-2 border-dashed border-neutral-700 hover:border-neutral-600 transition-colors flex flex-col items-center justify-center gap-2 cursor-pointer group"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-6 w-6 text-neutral-500 group-hover:text-neutral-400" />
+            <span className="text-xs text-neutral-500 group-hover:text-neutral-400">Upload</span>
+          </div>
+        )}
+      </div>
+
+      {/* Upload Options */}
+      <div className="flex items-center gap-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-2 px-3 py-2 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-800 transition-colors"
+        >
+          <Upload className="h-4 w-4" />
+          Upload Files
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowUrlInput(!showUrlInput)}
+          className="flex items-center gap-2 px-3 py-2 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-800 transition-colors"
+        >
+          <LinkIcon className="h-4 w-4" />
+          Add URL
+        </button>
+      </div>
+
+      {/* URL Input */}
+      {showUrlInput && (
+        <div className="flex items-center gap-2">
+          <input
+            type="url"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="https://example.com/image.jpg"
+            className="flex-1 px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-emerald-500/50"
+          />
+          <button
+            type="button"
+            onClick={addImageFromUrl}
+            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Add
+          </button>
+        </div>
+      )}
+
+      <p className="text-xs text-neutral-500">
+        {images.length}/{maxImages} images • Drag to reorder • Click star to set primary
+      </p>
+    </div>
+  );
+}
